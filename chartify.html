@@ -168,36 +168,69 @@
 		$("#textarea").keypress(function(event){
 			//alert(event.which);
 		    if (event.which == 59){ // on semicolon, parse input
+		    	//establish defaults
+		    	xpos = xpos_0;
+				ypos = ypos_0;
+				direction = 1;
+				row_max_height = 0;
+				past_row_widths = [];
+				cur_row_widths = [];
+				paper.clear();//redraw every time	
+
 		    	parse_input($("#textarea").val()); //style choice to pass the string. 
 		    }
 		    	//alert(String.fromCharCode(event.which)); 
 		 })
 
 		function parse_input(pattern_string){
-			xpos = xpos_0;
-			ypos = ypos_0;
-			direction = 1;
-			row_max_height = 0;
-			past_row_widths = [];
-			cur_row_widths = [];
-			paper.clear();//redraw every time
-
 			clean_pattern = pattern_string.replace(/\s+/g, '');
 			func_call_strings = clean_pattern.split(";");
+			//split separates different functions, slice removes the last (empty) element caused by the last ";"
+			console.log(func_call_strings);
+			//EG ["repeat(double(3)", "treble(2)", "turn()", ", 5)"]
 
-			for (f = 0; f < func_call_strings.length; f++){
+			f = 0;
+			while ((f < func_call_strings.length) && (func_call_strings[f] !== "")){
+				//while loop instead of for loop for repeat implementation.
+
 				split_func_call = func_call_strings[f].split("(");
+				// [0]: function name, [1]: function arguments (+ ")" in most cases)
 				func_name = (split_func_call[0]).toLowerCase();
-				if (func_name == "turn"){
-					turn();
-				}
+
+				if (func_name == "turn"){ turn(); }
 				else if (func_name == "color"){}
-				else if (func_name == "repeat"){}
+				else if (func_name == "repeat"){
+					to_parse = func_call_strings[f].substring(7)+";"; //"repeat(" has 7 characters
+						
+					while (f < func_call_strings.length){
+						f++;
+						next_split = func_call_strings[f];
+						// EG "treble(2)"
+
+						if (next_split.indexOf(',') < 0){
+							to_parse = to_parse + next_split + ";";
+							console.log(to_parse);
+						}
+						else{ break;}
+					}
+
+					//removes "," since it should be the zero-th char in this string 
+					// as well as the last character, ")"
+					n_repeats = Number(next_split.slice(1, -1));
+
+					for(r = 0; r < n_repeats; r++){
+						parse_input(to_parse);
+					}
+				}
+
+
 				else{
 					n_stitches = Number(split_func_call[1].slice(0, -1));		
 					//cut off last ")" char
 					call_stitch(func_name, n_stitches);
 				}	
+
+				f++;
 			}
 
 		}
