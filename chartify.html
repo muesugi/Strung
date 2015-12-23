@@ -20,9 +20,6 @@
 			function getWindowHeight() {
 				return window.innerHeight||document.documentElement.clientHeight||document.body.clientHeight||0;
 			}	
-			console.log(getWindowWidth());
-			console.log(getWindowHeight());
-			
 		</script>
 
 	</head>
@@ -68,18 +65,17 @@
 		container_resize();
 		function container_resize(){
 			window_h = getWindowHeight();
-			console.log("window height is "+window_h);
-			header_h = $(".header").height(); //header height + textarea height
-			console.log("header height is "+header_h);
+			header_h = $(".header").height();
 			txtarea_h = $("#textarea").height();
-			console.log("textarea height is "+txtarea_h);
 
 			new_h = window_h - header_h - txtarea_h;
-			console.log("new container height is "+new_h);
 			$("#container").css("height", new_h);
+
 			$("#download_div").css("height", new_h);
+			//for vertical text alignment
 			$("#download_div").css("line-height", new_h+"px");
 		}
+
 		//globals:
 		var paper = Raphael(document.getElementById('container'), "100%", "100%"); 
 		//creates the canvas.
@@ -195,7 +191,6 @@
 
 		function call_stitch(funcname, n_stitches){
 			//paper.setViewBox(0,0,650,650,false);
-			//console.log(stitch_widths);
 			st_type_width = stitch_widths[funcname];
 			row_max_height = Math.max(row_max_height, stitch_heights[funcname]);
 
@@ -227,6 +222,7 @@
 		})
 
 		function default_and_parse(){
+			ypos_0 = $("#container").height() - 80;
 			xpos = xpos_0;
 			ypos = ypos_0;
 			direction = 1;
@@ -303,6 +299,7 @@
 			$("#textarea").width('100%');
 			header_spacing();
 			container_resize();
+			default_and_parse();
 		});
 		</script>
 	</body>
