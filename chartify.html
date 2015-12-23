@@ -12,11 +12,31 @@
 
 		<link rel="stylesheet" href="css/jquery-linedtextarea.css">
 		<link rel="stylesheet" href="css/chartify.css">
-
 	</head>
 	<body>
 	<!--<a id="download" download="crochet-chart.png"><div id="downloader_div"> Download your chart! </div> </a>-->
-	<div id="header">STRUNG</div>
+	<div class="header">
+		<a id="site_name" href="index.html">STRUNG</a><!--127.5px-->
+
+		<!--site_nav floats backward, this is in reverse order: 
+		<div id="spacer" style="width: 5%; height: 1em; display:inline-block;"> </div>-->
+		<a class="site_nav" id="docs" href="documentation.html">Documentation</a> <!--150.797px-->
+		<a class="site_nav" id="textify" href="textify.html">Textify</a><!--68.125px-->
+		<a class="site_nav" id="visualize" href="visualize.html">Visualize</a><!--86.4844px-->
+		<a class="site_nav" id="chartify" href="chartify.html">Chartify</a> <!--79.8438px-->
+	</div>
+		<script type="text/javascript">
+			header_spacing();
+			function header_spacing(){
+				window_w = $(window).width()
+				title_w = 127.5 + window_w*.1; //width + padding-left
+				remaining_width = window_w - title_w - 150.797 - 68.125 - 86.4844 - 79.8438 - 3*window_w*.05;
+				//results that: site_name has a padding_left of 10%, a padding_right of 10%, and
+				// documentation has a padding_right of 5%
+				console.log(remaining_width);
+				$(".site_nav").css("padding-left", remaining_width/4);
+			}
+		</script>
 	<div id="content">
 		<div id="container"> </div>
 		<canvas id="canvas" style="display:none;"></canvas>
@@ -257,7 +277,7 @@
 		
 		$( window ).resize(function() {
 			$("#textarea").width('100%');
-			$("#textarea").resize();
+			header_spacing();
 		});
 		</script>
 	</body>
