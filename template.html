@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset=utf-8>
+		<title>Strung</title>
+		<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+
+		<link href='https://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
+
+		<link rel="stylesheet" href="css/custom.css">
+		<script type="text/javascript">
+		
+			function getWindowWidth() {
+				return window.innerWidth||document.documentElement.clientWidth||document.body.clientWidth||0;
+			}
+			function getWindowHeight() {
+				return window.innerHeight||document.documentElement.clientHeight||document.body.clientHeight||0;
+			}	
+		</script>
+
+	</head>
+	<body>
+	
+	<div class="header">
+		<a id="site_name" href="index.html">STRUNG</a><!--127.5px-->
+
+		<!--site_nav floats backward, this is in reverse order:-->
+		<a class="site_nav" id="docs" href="documentation.html">Documentation</a> <!--150.797px-->
+		<a class="site_nav" id="textify" href="textify.html">Textify</a><!--68.125px-->
+		<a class="site_nav" id="visualize" href="visualize.html">Visualize</a><!--86.4844px-->
+		<a class="site_nav" id="chartify" href="chartify.html">Chartify</a> <!--79.8438px-->
+	</div>
+		<script type="text/javascript">
+			header_spacing();
+			function header_spacing(){
+				window_w = getWindowWidth();
+				title_w = 127.5 + window_w*.1; //width + padding-left
+				remaining_width = window_w - title_w - 150.797 - 68.125 - 86.4844 - 79.8438 - 3*window_w*.05;
+				//results that: site_name has a padding_left of 10%, a padding_right of 10%, and
+				// documentation has a padding_right of 5%
+				$(".site_nav").css("padding-left", remaining_width/4);
+			}
+		</script>
+	</body>
+</html>
+	
+	
