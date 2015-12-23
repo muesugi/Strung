@@ -7,8 +7,12 @@
 		<script src="http://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
 		<script src="js/canvg.js"></script> 
 		<script src="js/jquery-linedtextarea.js"></script> 
+
+		<link href='https://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
+
 		<link rel="stylesheet" href="css/jquery-linedtextarea.css">
 		<link rel="stylesheet" href="css/chartify.css">
+
 	</head>
 	<body>
 	<!--<a id="download" download="crochet-chart.png"><div id="downloader_div"> Download your chart! </div> </a>-->
@@ -22,13 +26,13 @@
 		</div> 
 	</div>
 
-	<div id="textarea_holder">
+	<!--<div id="textarea_holder">-->
 		<textarea id="textarea" spellcheck=false></textarea>
-	</div>
+	<!--</div>-->
 	
 	
 	<script>
-		$('#textarea').linedtextarea();
+		//$('#textarea').linedtextarea();
 		//globals:
 		var paper = Raphael(document.getElementById('container'), "100%", "100%"); 
 		//creates the canvas. 100% of 50% of window size
@@ -249,11 +253,12 @@
 		    $("#container").toggle();
 		    $("#download_div").toggle();
 		});
-		/*$("#container").mouseout(function(){
-			//$("#container").html();
-			paper = Raphael(document.getElementById('container'), "100%", "100%"); 
-			default_and_parse();
-		});*/
+
+		
+		$( window ).resize(function() {
+			$("#textarea").width('100%');
+			$("#textarea").resize();
+		});
 		</script>
 	</body>
 </html>
