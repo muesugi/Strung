@@ -34,3 +34,16 @@ a:link, a:visited, a:hover, a:active {
 #docs{
 	padding-right: 5%;
 }
+
+/* TEXTAREA */ 
+#textarea {
+	width: 100%;
+	font-size: 16px; 
+	bottom:0px;
+	position: fixed;
+	height: 3em;
+	padding: 10px;
+}
+#textarea:focus { /*removes blue border*/
+    outline: none;
+}

@@ -19,20 +19,3 @@
 #download_div a {
 	color: #F1E8B8;
 }
-
-/* TEXTAREA */ 
-#textarea {
-	width: 100%;
-	font-size: 16px; 
-	bottom:0px;
-	position: fixed;
-	height: 3em;
-	padding: 10px;
-}
-#textarea:focus { /*removes blue border*/
-    outline: none;
-}
-#textareaholder {
-	position:fixed;
-	bottom:0px;
-}
