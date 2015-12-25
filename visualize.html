@@ -83,7 +83,10 @@
 
 			//// Three.js settings for all stitches //////
 			//var yarn_geometry = new THREE.CylinderGeometry(.1, .1, 2, 20);
-			var yarn_material = new THREE.MeshBasicMaterial( {color: "red"});
+			var yarn_material0 = new THREE.MeshBasicMaterial( {color: "red"});
+			var yarn_material1 = new THREE.MeshBasicMaterial( {color: "black"});
+			var yarn_material2 = new THREE.MeshBasicMaterial( {color: "green"});
+			var yarn_material3 = new THREE.MeshBasicMaterial( {color: "blue"});
 
 			//scaling depends on yarn being used
 			//as wpi gets larger, "zoom in" closer--> set yarn radius (in inches) to pixel ratio for simplicity
@@ -99,7 +102,9 @@
 				return n_pixels * (1/pix_per_radius) * .5 * (1/yarn_wpi); 
 			}
 
-			var start_x = 100;
+			var x_max = window.innerWidth/4/2; //2 for testing only
+			var start_x = x_max;
+
 			var start_y = 000;
 			var start_z = 000;
 
@@ -130,15 +135,15 @@
 			// Makes a (starting) tail yarn end 
 			// starting at (xpos, ypos, zpos)
 			function tail_geometry(xpos, ypos, zpos){
-				tail_length_inches = 3; 
+				tail_length_inches = 2; 
 				tail_length_pixels = inches_to_pixels(tail_length_inches); 
 
 				//n_points = 100;
 
 				tail_curve = new THREE.CatmullRomCurve3([
 				   new THREE.Vector3(xpos, ypos, zpos),
-				   new THREE.Vector3(xpos-(tail_length_pixels/2), ypos - (tail_length_pixels/5), zpos),
-				   new THREE.Vector3(xpos-tail_length_pixels, ypos, zpos),
+				   new THREE.Vector3(xpos - (tail_length_pixels/2), ypos - (tail_length_pixels/5), zpos),
+				   new THREE.Vector3(xpos - tail_length_pixels, ypos, zpos),
 				]);
 
 				return new THREE.TubeGeometry(tail_curve);
@@ -149,12 +154,40 @@
 				var n_points = 100;
 
 				slip_curve = new THREE.CatmullRomCurve3([
-				   new THREE.Vector3(xpos+pix_per_radius, ypos, zpos),
-				   //(xpos + diam + radius, ypos, zpos)
-				   new THREE.Vector3(xpos, ypos + 3*pix_per_radius, zpos),
-				   //add a z point here
-				   new THREE.Vector3(xpos+pix_per_radius, ypos - 4*pix_per_radius, zpos)
-				   //new THREE.Vector3(xpos+pix_per_radius, ypos, zpos),
+				
+					//always include start point
+					new THREE.Vector3(xpos, ypos, zpos), 
+					new THREE.Vector3(xpos-(2*pix_per_radius), ypos, 
+				    	zpos),
+				    new THREE.Vector3(xpos-(3*pix_per_radius), ypos-(2*pix_per_radius), 
+				    	zpos-(3*pix_per_radius)),
+				    new THREE.Vector3(xpos-(2*pix_per_radius), ypos-(1*pix_per_radius), 
+				    	zpos-(4*pix_per_radius)),
+				    new THREE.Vector3(xpos-(1*pix_per_radius), ypos+pix_per_radius, 
+				    	zpos-(3*pix_per_radius)),
+				    new THREE.Vector3(xpos, ypos, 
+				    	zpos+(1*pix_per_radius)),
+				    new THREE.Vector3(xpos, 
+				    	ypos-(1*pix_per_radius), 
+				    	zpos+(2*pix_per_radius)),
+				    new THREE.Vector3(xpos-(1*pix_per_radius), ypos-(2*pix_per_radius), 
+				    	zpos),
+				    new THREE.Vector3(xpos-(3*pix_per_radius), ypos-(1*pix_per_radius), 
+				    	zpos-(4*pix_per_radius)),
+				    //loop
+				    new THREE.Vector3(xpos-(9*pix_per_radius), ypos-(1*pix_per_radius), 
+				    	zpos-(4*pix_per_radius)),
+				    new THREE.Vector3(xpos-(10*pix_per_radius), ypos-(1*pix_per_radius), 
+				    	zpos-(1*pix_per_radius)),
+				    new THREE.Vector3(xpos-(9*pix_per_radius), ypos-(1*pix_per_radius), 
+				    	zpos+(1*pix_per_radius)),
+				    new THREE.Vector3(xpos-(3*pix_per_radius), ypos-(1*pix_per_radius), 
+				    	zpos+(1*pix_per_radius)),
+				    new THREE.Vector3(xpos-(3*pix_per_radius), ypos-(1*pix_per_radius), 
+				    	zpos+(1*pix_per_radius)),
+
+				    new THREE.Vector3(xpos, ypos-(1*pix_per_radius), zpos+(1*pix_per_radius))
+				    //Show the ball of yarn here?
 				]);
 
 				return new THREE.TubeGeometry(slip_curve);
@@ -167,12 +200,12 @@
 			// tail
 			scene.add(new THREE.Line(
 				tail_geometry(start_x, start_y, start_z), 
-				yarn_material));
+				yarn_material0));
 			xpos = xpos - tail_length_pixels;
 			// slip stitch
 			scene.add(new THREE.Line(
 				slip_geometry(xpos, ypos, zpos), 
-				yarn_material));
+				yarn_material1));
 
 			function render() {
 				var delta = clock.getDelta();
