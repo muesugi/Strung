@@ -19,6 +19,30 @@
 				return window.innerHeight||document.documentElement.clientHeight||document.body.clientHeight||0;
 			}	
 
+			THREE.CylinderCurvedSurfaceGeometry = function(radius, height, startAngle, endAngle, horizontalSegments, verticalSegments) {
+				//optional params
+				startAngle = startAngle || Math.PI/2;
+				endAngle = endAngle || Math.PI;
+				horizontalSegments = horizontalSegments || 25;
+				verticalSegments = verticalSegments || 25;
+				//
+
+			    var width = radius * 2 * Math.PI;
+			    var plane = new THREE.PlaneGeometry(width, height, horizontalSegments, verticalSegments);
+			    var index = 0;
+
+			    for(var i=0; i<=verticalSegments; i++) {
+			        for(var j=0; j<=horizontalSegments; j++) {
+			            var angle = startAngle + (j/horizontalSegments)*(endAngle - startAngle);
+			            plane.vertices[index].z = radius * Math.cos(angle);
+			            plane.vertices[index].x = radius * Math.sin(angle);
+			            index++;
+			        }
+			    }
+
+			    return plane;
+			}
+
 		</script>
 
 	</head>
@@ -43,11 +67,11 @@
 				// documentation has a padding_right of 5%
 				$(".site_nav").css("padding-left", remaining_width/4);
 			}
-
+			//// Scene Setup //////
 			var scene = new THREE.Scene();
 			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 
-			camera.position.z = 20;
+			camera.position.z = 200;
 
 			var renderer = new THREE.WebGLRenderer( { alpha: true });
 			renderer.setSize( window.innerWidth, window.innerHeight );
@@ -57,18 +81,93 @@
 			cameraControls.target.set(0, 0, 0);
 			var clock = new THREE.Clock();
 
-			var yarn_geometry = new THREE.CylinderGeometry(.5, .5, 2, 20);
-			var yarn_material = new THREE.MeshBasicMaterial( {color: 0x00ff00});
-			var thread = new THREE.Mesh(yarn_geometry, yarn_material);
-			scene.add(thread);
+			//// Three.js settings for all stitches //////
+			//var yarn_geometry = new THREE.CylinderGeometry(.1, .1, 2, 20);
+			var yarn_material = new THREE.MeshBasicMaterial( {color: "red"});
 
+			//scaling depends on yarn being used
+			//as wpi gets larger, "zoom in" closer--> set yarn_radius inches to 1 pixel for simplicity
+			//wraps-per-inch, a standard metric for yarn purchase and storage 
+			var yarn_wpi = 5; // where a wrap is defined as the diameter; wrap = 2 * radius
+			var pix_per_radius = 1; //still include this measure in case this changes
+			var yarn_radius = 1/(2*yarn_wpi);
+
+			var start_x = 100;
+			var start_y = 000;
+			var start_z = 000;
+
+			var xpos = start_x;
+			var ypos = start_y;
+			var zpos = start_z;
+
+			// Smooth curve over this many points
+			var numPoints = 100;
+
+			// using "_" naming convention for all geometry funcs to 
+			// differentiate custom functions and THREE.js builtins
+
+			// Given a CatmullRomCurve3, creates a THREE.geometry  
+			// that follows this curve, smoothed over n_points points.
+			// Helper for all custom geometry functions.
+			function geometry_from_curve(n_points, curve){
+				new_geom = new THREE.Geometry();
+				geom_points = curve.getPoints(n_points);
+
+				for(var i = 0; i < n_points; i++){
+				    new_geom.vertices.push(geom_points[i]);  
+				}
+				return new_geom;
+			}
+
+			// Makes a (starting) tail yarn end 
+			// starting at (xpos, ypos, zpos)
+			function tail_geometry(xpos, ypos, zpos){
+				tail_length_inches = 3; 
+				tail_length_pixels = tail_length_inches * yarn_wpi * 2 * pix_per_radius; 
+
+				n_points = 100;
+
+				tail_curve = new THREE.CatmullRomCurve3([
+				   new THREE.Vector3(xpos, ypos, zpos),
+				   new THREE.Vector3(xpos-(tail_length_pixels/2), ypos - (tail_length_pixels/5), zpos),
+				   new THREE.Vector3(xpos-tail_length_pixels, ypos, zpos),
+				]);
+
+				return geometry_from_curve(n_points, tail_curve);
+			}
+
+			function slip_geometry(xpos, ypos, zpos){
+				var n_points = 100;
+
+				slip_curve = new THREE.CatmullRomCurve3([
+				   new THREE.Vector3(xpos+yarn_radius, ypos, zpos),
+				   //(xpos + diam + radius, ypos, zpos)
+				   new THREE.Vector3(xpos, ypos + 3*yarn_radius, zpos),
+				   //add a z point here
+				   new THREE.Vector3(xpos+yarn_radius, ypos - 4*yarn_radius, zpos)
+				   //new THREE.Vector3(xpos+yarn_radius, ypos, zpos),
+				]);
+
+				return geometry_from_curve(n_points, slip_curve);
+			}
+
+
+
+			/// Testing specific function calls.
+
+			// tail
+			scene.add(new THREE.Line(
+				tail_geometry(start_x, start_y, start_z), 
+				yarn_material));
+			// slip stitch
+			scene.add(new THREE.Line(
+				slip_geometry(start_x, start_y, start_z), 
+				yarn_material));
 
 			function render() {
 				var delta = clock.getDelta();
 				requestAnimationFrame( render );
-				
 				cameraControls.update(delta);
-
 				renderer.render( scene, camera );
 			}
 			render();
