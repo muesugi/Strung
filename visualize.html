@@ -93,7 +93,7 @@
 			//wraps-per-inch, a standard metric for yarn purchase and storage 
 			var yarn_wpi = 5; // where a wrap is defined as the diameter; wrap = 2 * radius
 			// yarn radius in inches is 1/(2*yarn_wpi)
-			var pix_per_radius = 4; // equiv to yarn radius in pixels
+			var pix_per_radius = 1; // equiv to yarn radius in pixels
 
 			function inches_to_pixels(n_inches){
 				return n_inches * yarn_wpi * 2 * pix_per_radius; 
@@ -157,25 +157,34 @@
 				
 					//always include start point
 					new THREE.Vector3(xpos, ypos, zpos), 
+					// loop 1 (flat on yz plane)
 					new THREE.Vector3(xpos-(2*pix_per_radius), ypos, 
 				    	zpos),
-				    new THREE.Vector3(xpos-(3*pix_per_radius), ypos-(2*pix_per_radius), 
+					///////
+				    new THREE.Vector3(xpos-(3*pix_per_radius), 
+				    	ypos-(2*pix_per_radius), 
+				    	zpos-(2*pix_per_radius)),
+				    new THREE.Vector3(xpos-(2*pix_per_radius), 
+				    	ypos-(1*pix_per_radius), 
 				    	zpos-(3*pix_per_radius)),
-				    new THREE.Vector3(xpos-(2*pix_per_radius), ypos-(1*pix_per_radius), 
-				    	zpos-(4*pix_per_radius)),
-				    new THREE.Vector3(xpos-(1*pix_per_radius), ypos+pix_per_radius, 
+				    new THREE.Vector3(xpos-(1*pix_per_radius), 
+				    	ypos, 
 				    	zpos-(3*pix_per_radius)),
 				    new THREE.Vector3(xpos, ypos, 
 				    	zpos+(1*pix_per_radius)),
 				    new THREE.Vector3(xpos, 
 				    	ypos-(1*pix_per_radius), 
 				    	zpos+(2*pix_per_radius)),
-				    new THREE.Vector3(xpos-(1*pix_per_radius), ypos-(2*pix_per_radius), 
+				    new THREE.Vector3(xpos-(1*pix_per_radius), 
+				    	ypos-(2*pix_per_radius), 
 				    	zpos),
-				    new THREE.Vector3(xpos-(3*pix_per_radius), ypos-(1*pix_per_radius), 
-				    	zpos-(4*pix_per_radius)),
-				    //loop
-				    new THREE.Vector3(xpos-(9*pix_per_radius), ypos-(1*pix_per_radius), 
+
+				    new THREE.Vector3(xpos-(3*pix_per_radius), 
+				    	ypos-(1*pix_per_radius), 
+				    	zpos-(2*pix_per_radius)),
+
+				    //loop (laying flat on xz plane)
+				    new THREE.Vector3(xpos-(9*pix_per_radius), ypos, 
 				    	zpos-(4*pix_per_radius)),
 				    new THREE.Vector3(xpos-(10*pix_per_radius), ypos-(1*pix_per_radius), 
 				    	zpos-(1*pix_per_radius)),
@@ -186,8 +195,18 @@
 				    new THREE.Vector3(xpos-(3*pix_per_radius), ypos-(1*pix_per_radius), 
 				    	zpos+(1*pix_per_radius)),
 
-				    new THREE.Vector3(xpos, ypos-(1*pix_per_radius), zpos+(1*pix_per_radius))
-				    //Show the ball of yarn here?
+				    new THREE.Vector3(xpos, ypos-(1*pix_per_radius), zpos+(1*pix_per_radius)),
+
+				    //turnaround to start next stitch
+				    new THREE.Vector3(xpos+(1*pix_per_radius),
+				    	ypos-(2*pix_per_radius), 
+				    	zpos+(1*pix_per_radius)),
+				    new THREE.Vector3(xpos+(0*pix_per_radius),
+				    	ypos-(3*pix_per_radius), 
+				    	zpos+(1*pix_per_radius)),
+				    new THREE.Vector3(xpos-(20*pix_per_radius),
+				    	ypos-(3*pix_per_radius), 
+				    	zpos)
 				]);
 
 				return new THREE.TubeGeometry(slip_curve);
