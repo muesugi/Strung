@@ -92,6 +92,13 @@
 			var pix_per_radius = 1; //still include this measure in case this changes
 			var yarn_radius = 1/(2*yarn_wpi);
 
+			function inches_to_pixels(n_inches){
+				return n_inches * yarn_wpi * 2 * pix_per_radius; 
+			}
+			function pixels_to_inches(n_pixels){
+				return n_pixels * (1/pix_per_radius) * .5 * (1/yarn_wpi); 
+			}
+
 			var start_x = 100;
 			var start_y = 000;
 			var start_z = 000;
@@ -123,7 +130,7 @@
 			// starting at (xpos, ypos, zpos)
 			function tail_geometry(xpos, ypos, zpos){
 				tail_length_inches = 3; 
-				tail_length_pixels = tail_length_inches * yarn_wpi * 2 * pix_per_radius; 
+				tail_length_pixels = inches_to_pixels(tail_length_inches); 
 
 				n_points = 100;
 
