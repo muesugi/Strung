@@ -86,11 +86,11 @@
 			var yarn_material = new THREE.MeshBasicMaterial( {color: "red"});
 
 			//scaling depends on yarn being used
-			//as wpi gets larger, "zoom in" closer--> set yarn_radius inches to 1 pixel for simplicity
+			//as wpi gets larger, "zoom in" closer--> set yarn radius (in inches) to pixel ratio for simplicity
 			//wraps-per-inch, a standard metric for yarn purchase and storage 
 			var yarn_wpi = 5; // where a wrap is defined as the diameter; wrap = 2 * radius
-			var pix_per_radius = 1; //still include this measure in case this changes
-			var yarn_radius = 1/(2*yarn_wpi);
+			// yarn radius in inches is 1/(2*yarn_wpi)
+			var pix_per_radius = 4; // equiv to yarn radius in pixels
 
 			function inches_to_pixels(n_inches){
 				return n_inches * yarn_wpi * 2 * pix_per_radius; 
@@ -106,6 +106,7 @@
 			var xpos = start_x;
 			var ypos = start_y;
 			var zpos = start_z;
+			var direction = 1; // implement this later
 
 			// Smooth curve over this many points
 			var numPoints = 100;
@@ -115,8 +116,8 @@
 
 			// Given a CatmullRomCurve3, creates a THREE.geometry  
 			// that follows this curve, smoothed over n_points points.
-			// Helper for all custom geometry functions.
-			function geometry_from_curve(n_points, curve){
+			// Possible helper for all custom geometry functions.
+			function path_geometry_from_curve(n_points, curve){
 				new_geom = new THREE.Geometry();
 				geom_points = curve.getPoints(n_points);
 
@@ -132,7 +133,7 @@
 				tail_length_inches = 3; 
 				tail_length_pixels = inches_to_pixels(tail_length_inches); 
 
-				n_points = 100;
+				//n_points = 100;
 
 				tail_curve = new THREE.CatmullRomCurve3([
 				   new THREE.Vector3(xpos, ypos, zpos),
@@ -140,24 +141,25 @@
 				   new THREE.Vector3(xpos-tail_length_pixels, ypos, zpos),
 				]);
 
-				return geometry_from_curve(n_points, tail_curve);
+				return new THREE.TubeGeometry(tail_curve);
+				//return geometry_from_curve(n_points, tail_curve);
 			}
 
 			function slip_geometry(xpos, ypos, zpos){
 				var n_points = 100;
 
 				slip_curve = new THREE.CatmullRomCurve3([
-				   new THREE.Vector3(xpos+yarn_radius, ypos, zpos),
+				   new THREE.Vector3(xpos+pix_per_radius, ypos, zpos),
 				   //(xpos + diam + radius, ypos, zpos)
-				   new THREE.Vector3(xpos, ypos + 3*yarn_radius, zpos),
+				   new THREE.Vector3(xpos, ypos + 3*pix_per_radius, zpos),
 				   //add a z point here
-				   new THREE.Vector3(xpos+yarn_radius, ypos - 4*yarn_radius, zpos)
-				   //new THREE.Vector3(xpos+yarn_radius, ypos, zpos),
+				   new THREE.Vector3(xpos+pix_per_radius, ypos - 4*pix_per_radius, zpos)
+				   //new THREE.Vector3(xpos+pix_per_radius, ypos, zpos),
 				]);
 
-				return geometry_from_curve(n_points, slip_curve);
+				return new THREE.TubeGeometry(slip_curve);
+				//return path_geometry_from_curve(n_points, slip_curve);
 			}
-
 
 
 			/// Testing specific function calls.
@@ -166,9 +168,10 @@
 			scene.add(new THREE.Line(
 				tail_geometry(start_x, start_y, start_z), 
 				yarn_material));
+			xpos = xpos - tail_length_pixels;
 			// slip stitch
 			scene.add(new THREE.Line(
-				slip_geometry(start_x, start_y, start_z), 
+				slip_geometry(xpos, ypos, zpos), 
 				yarn_material));
 
 			function render() {
