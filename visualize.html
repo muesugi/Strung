@@ -164,10 +164,10 @@
 				zpos = start_z;
 
 				slip_array = [new THREE.Vector3(xpos, ypos, zpos)];
-				yz0_end_theta = 16*Math.PI/8;
+				yz0_end_theta = 2*Math.PI;
 				//polar/spherical coordinates
 				//ellipse with an innerheight of yarn radius and innerwidth of 2*yarn radius
-				for (var t = 0; t <= yz0_end_theta; t = t + (Math.PI/8)){ 
+				for (var t = 0; t <= yz0_end_theta; t = t + (Math.PI/32)){ 
 					yz0_x = xpos + (t * 2 * pix_per_radius/(yz0_end_theta)); //+ slowly move toward xpos - radius
 					//2 * radius is a diameter
 					yz0_y = ypos - 2*pix_per_radius*Math.cos(t);
@@ -176,16 +176,20 @@
 					
 					slip_array.push(new THREE.Vector3(yz0_x, 
 						yz0_y, yz0_z));
+
+					console.log(t);
+					console.log("end t is "+yz0_end_theta);
 					if (t == yz0_end_theta){
-						xpos = yz0_x;
-						ypos = yz0_y;
-						zpos = yz0_z;
+						xpos = xpos + (2 * pix_per_radius);
+						ypos = ypos - 2*pix_per_radius*Math.cos(yz0_end_theta);
+						zpos = zpos - 4*pix_per_radius*Math.sin(yz0_end_theta);
 					}
 				}
 
 				///
 				connector_array = [
 					//connect to end of hook_loop 
+					new THREE.Vector3(xpos, ypos, zpos),
 					new THREE.Vector3(xpos, ypos, zpos - (1* pix_per_radius)),
 					new THREE.Vector3(xpos, ypos + (1 * pix_per_radius), zpos - (2* pix_per_radius)),
 					new THREE.Vector3(xpos - (1* pix_per_radius), ypos + (2 * pix_per_radius), zpos - (2* pix_per_radius)),
