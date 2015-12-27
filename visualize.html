@@ -71,7 +71,7 @@
 			//wraps-per-inch, a standard metric for yarn purchase and storage 
 			var yarn_wpi = 5; // where a wrap is defined as the diameter; wrap = 2 * radius
 			// yarn radius in inches is 1/(2*yarn_wpi)
-			var pix_per_radius = 1; // equiv to yarn radius in pixels
+			var pix_per_radius = 2; // equiv to yarn radius in pixels
 
 			function inches_to_pixels(n_inches){
 				return n_inches * yarn_wpi * 2 * pix_per_radius; 
@@ -204,6 +204,31 @@
 				//end of slip, after hook loop
 				slip_array.push(new THREE.Vector3(start_x, start_y, zpos - pix_per_radius));
 				slip_array.push(new THREE.Vector3(start_x + 3*pix_per_radius, start_y, zpos - pix_per_radius));
+				slip_array.push(new THREE.Vector3(start_x + 3*pix_per_radius, start_y, zpos - pix_per_radius));
+
+				xpos = start_x + 3*pix_per_radius;
+				ypos = start_y;
+				zpos = zpos - pix_per_radius;
+				//curve back around to "point" in the correct direction
+				//curve on the xy plane
+				
+				reorient_center_x = xpos - 2*pix_per_radius;
+				reorient_center_y = ypos - 4*pix_per_radius;
+
+				reorient_start_theta =  7*math.pi/4;
+				reorient_displacement = 5*math.pi/4;
+
+				reorient_array = [new THREE.Vector3(reorient_center_x + 3*pix_per_radius*math.cos(reorient_start_theta),
+					reorient_center_y - 1*pix_per_radius*math.sin(reorient_start_theta),
+					zpos - ((reorient_start_theta * 2 * pix_per_radius)/(reorient_start_theta + reorient_displacement))),
+				new THREE.Vector3(reorient_center_x,
+					reorient_center_y - 1*pix_per_radius*math.sin(reorient_start_theta),
+					start_z),
+				new THREE.Vector3(start_x - 2*pix_per_radius,
+					start_y,
+					start_z)
+				];
+				slip_array = slip_array.concat(reorient_array);
 
 				slip_curve = new THREE.CatmullRomCurve3(slip_array);
 				slip_geom = new THREE.TubeGeometry(slip_curve, 64, pix_per_radius);
@@ -228,7 +253,7 @@
 			function draw_to_scene(stitch, x, y, z, material){
 				geom_call = stitch + "_geometry";
 				stitch_geometry = window[geom_call](x, y, z); //calls correct symbol based on funcname
-				scene.add(new THREE.Mesh(stitch_geometry, material)); 
+				scene.add(new THREE.Line(stitch_geometry, material)); 
 				//create THREE.Line instead for unfilled model (better able to see individual lines),
 				// THREE.Mesh for a smoother model
 			}
@@ -239,7 +264,7 @@
 			draw_to_scene("tail", start_x, start_y, start_z, yarn_material0);
 			xpos = xpos - tail_length_pixels;
 			// slip stitch
-			draw_to_scene("slip", xpos, ypos, zpos, yarn_material1);
+			draw_to_scene("slip", xpos, ypos, zpos, yarn_material2);
 
 			function render() {
 				var delta = clock.getDelta();
