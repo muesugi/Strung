@@ -11,15 +11,16 @@
 		<link rel="stylesheet" href="css/custom.css">
 		<link rel="stylesheet" href="css/visualize.css">
 		<script type="text/javascript">
-		
+		/// set up any formulas and formal definitions
 			function getWindowWidth() {
 				return window.innerWidth||document.documentElement.clientWidth||document.body.clientWidth||0;
 			}
 			function getWindowHeight() {
 				return window.innerHeight||document.documentElement.clientHeight||document.body.clientHeight||0;
 			}	
+			var mm_per_inch = 25.4;
 
-			THREE.CylinderCurvedSurfaceGeometry = function(radius, height, startAngle, endAngle, horizontalSegments, verticalSegments) {
+			/*THREE.CylinderCurvedSurfaceGeometry = function(radius, height, startAngle, endAngle, horizontalSegments, verticalSegments) {
 				//optional params
 				startAngle = startAngle || Math.PI/2;
 				endAngle = endAngle || Math.PI;
@@ -41,7 +42,7 @@
 			    }
 
 			    return plane;
-			}
+			}*/
 
 		</script>
 
@@ -81,19 +82,13 @@
 			cameraControls.target.set(0, 0, 0);
 			var clock = new THREE.Clock();
 
-			//// Three.js settings for all stitches //////
-			//var yarn_geometry = new THREE.CylinderGeometry(.1, .1, 2, 20);
-			var yarn_material0 = new THREE.MeshBasicMaterial( {color: "red"});
-			var yarn_material1 = new THREE.MeshBasicMaterial( {color: "black"});
-			var yarn_material2 = new THREE.MeshBasicMaterial( {color: "green"});
-			var yarn_material3 = new THREE.MeshBasicMaterial( {color: "blue"});
-
 			//scaling depends on yarn being used
 			//as wpi gets larger, "zoom in" closer--> set yarn radius (in inches) to pixel ratio for simplicity
 			//wraps-per-inch, a standard metric for yarn purchase and storage 
 			var yarn_wpi = 5; // where a wrap is defined as the diameter; wrap = 2 * radius
 			// yarn radius in inches is 1/(2*yarn_wpi)
-			var pix_per_radius = 1; // equiv to yarn radius in pixels
+			var pix_per_radius = 2; // equiv to yarn radius in pixels
+			// 2 for standard/view mode, 10 for "loosening"
 
 			function inches_to_pixels(n_inches){
 				return n_inches * yarn_wpi * 2 * pix_per_radius; 
@@ -102,7 +97,17 @@
 				return n_pixels * (1/pix_per_radius) * .5 * (1/yarn_wpi); 
 			}
 
-			var x_max = window.innerWidth/4/2; //2 for testing only
+			//// Three.js settings for all stitches //////
+			//var yarn_geometry = new THREE.CylinderGeometry(.1, .1, 2, 20);
+			var yarn_material0 = new THREE.MeshBasicMaterial( {color: "red"});
+			var yarn_material1 = new THREE.MeshBasicMaterial( {color: "black"});
+			var yarn_material2 = new THREE.MeshBasicMaterial( {color: "green"});
+			var yarn_material3 = new THREE.MeshBasicMaterial( {color: "blue"});
+			hook_diam_mm = 11.5; //standard hook sizing is hook diameter in mm
+			hook_r_inches = hook_diam_mm/(2*mm_per_inch); //converted to inches 
+			var hook_r = inches_to_pixels(hook_r_inches);
+
+			var x_max = window.innerWidth/4/2; //affects centering off piece
 			var start_x = x_max;
 
 			var start_y = 000;
@@ -115,6 +120,8 @@
 
 			// Smooth curve over this many points
 			var numPoints = 100;
+			var scene_add_geometries = []; //will add all at once later
+			//to facillitate generation of multiple geometries in function calls
 
 			// using "_" naming convention for all geometry funcs to 
 			// differentiate custom functions and THREE.js builtins
@@ -138,23 +145,23 @@
 				tail_length_inches = 2; 
 				tail_length_pixels = inches_to_pixels(tail_length_inches); 
 
-				//n_points = 100;
-
 				tail_curve = new THREE.CatmullRomCurve3([
 				   new THREE.Vector3(xpos, ypos, zpos),
 				   new THREE.Vector3(xpos - (tail_length_pixels/2), ypos - (tail_length_pixels/5), zpos),
 				   new THREE.Vector3(xpos - tail_length_pixels, ypos, zpos),
 				]);
+				tail_geom = new THREE.TubeGeometry(tail_curve, 64, pix_per_radius);
 
-				return new THREE.TubeGeometry(tail_curve);
+				scene_add_geometries.push(tail_geom)
+				return tail_geom;
 				//return geometry_from_curve(n_points, tail_curve);
 			}
 
 			function slip_geometry(xpos, ypos, zpos){
+				/* ///v1
 				var n_points = 100;
 
-				slip_curve = new THREE.CatmullRomCurve3([
-				
+				slip0_curve = new THREE.CatmullRomCurve3([
 					//always include start point
 					new THREE.Vector3(xpos, ypos, zpos), 
 					// loop 1 (flat on yz plane)
@@ -166,10 +173,10 @@
 				    	zpos-(2*pix_per_radius)),
 				    new THREE.Vector3(xpos-(2*pix_per_radius), 
 				    	ypos-(1*pix_per_radius), 
-				    	zpos-(3*pix_per_radius)),
+				    	zpos-(2*pix_per_radius)),
 				    new THREE.Vector3(xpos-(1*pix_per_radius), 
 				    	ypos, 
-				    	zpos-(3*pix_per_radius)),
+				    	zpos-(2*pix_per_radius)),
 				    new THREE.Vector3(xpos, ypos, 
 				    	zpos+(1*pix_per_radius)),
 				    new THREE.Vector3(xpos, 
@@ -181,21 +188,38 @@
 
 				    new THREE.Vector3(xpos-(3*pix_per_radius), 
 				    	ypos-(1*pix_per_radius), 
-				    	zpos-(2*pix_per_radius)),
+				    	zpos-(2*pix_per_radius))]);
 
-				    //loop (laying flat on xz plane)
-				    new THREE.Vector3(xpos-(9*pix_per_radius), ypos, 
-				    	zpos-(4*pix_per_radius)),
-				    new THREE.Vector3(xpos-(10*pix_per_radius), ypos-(1*pix_per_radius), 
-				    	zpos-(1*pix_per_radius)),
-				    new THREE.Vector3(xpos-(9*pix_per_radius), ypos-(1*pix_per_radius), 
-				    	zpos+(1*pix_per_radius)),
-				    new THREE.Vector3(xpos-(3*pix_per_radius), ypos-(1*pix_per_radius), 
-				    	zpos+(1*pix_per_radius)),
-				    new THREE.Vector3(xpos-(3*pix_per_radius), ypos-(1*pix_per_radius), 
-				    	zpos+(1*pix_per_radius)),
+				slip0_geometry = new THREE.TubeGeometry(slip0_curve);
+				scene_add_geometries.push(slip0_geometry);
 
-				    new THREE.Vector3(xpos, ypos-(1*pix_per_radius), zpos+(1*pix_per_radius)),
+				hook_loop_start_x = xpos-(3*pix_per_radius);
+				hook_loop_start_y = ypos-(1*pix_per_radius); //y should remain same
+				hook_loop_start_z = zpos-(2*pix_per_radius);
+
+				end_theta = 5*Math.PI/8;
+
+				loop_array = [new THREE.Vector3(hook_loop_start_x, hook_loop_start_y, hook_loop_start_z)];
+				//polar/spherical coordinates
+				for (var t = 0; t <= end_theta; t = t + (Math.PI/16)){ 
+					loop_x = hook_loop_start_x - hook_r*Math.cos(t);
+					loop_z = hook_loop_start_z + hook_r*Math.sin(t);
+
+					loop_array.push(new THREE.Vector3(loop_x, hook_loop_start_y, loop_z));
+				}
+
+				hook_loop = new THREE.CatmullRomCurve3(loop_array);
+				hook_geometry = new THREE.TubeGeometry(hook_loop);
+				scene_add_geometries.push(hook_geometry);
+
+				hook_loop_end_x = hook_loop_start_x - hook_r*Math.cos(end_theta);
+				hook_loop_end_z = hook_loop_start_z + hook_r*Math.sin(end_theta);
+
+				slip1_curve = new THREE.CatmullRomCurve3([
+					//connect to end of hook_loop
+					new THREE.Vector3(hook_loop_end_x, hook_loop_start_y, hook_loop_end_z),
+
+					new THREE.Vector3(xpos, ypos-(1*pix_per_radius), zpos+(1*pix_per_radius)),
 
 				    //turnaround to start next stitch
 				    new THREE.Vector3(xpos+(1*pix_per_radius),
@@ -208,23 +232,107 @@
 				    	ypos-(3*pix_per_radius), 
 				    	zpos)
 				]);
-
-				return new THREE.TubeGeometry(slip_curve);
+				slip1_geometry = new THREE.TubeGeometry(slip1_curve);
+				scene_add_geometries.push(slip1_geometry);
+				//return new THREE.TubeGeometry(slip_curve);
 				//return path_geometry_from_curve(n_points, slip_curve);
+				*/
+				//v2 
+				//starts at xpos, ypos, zpos
+				startx = xpos;
+				starty = ypos;
+				startz = zpos;
+				console.log(startz);
+				slip_array = [new THREE.Vector3(xpos, ypos, zpos)];
+				yz0_end_theta = 16*Math.PI/8
+
+				//polar/spherical coordinates
+				//ellipse with an innerheight of yarn radius and innerwidth of 2*yarn radius
+				for (var t = 0; t <= yz0_end_theta; t = t + (Math.PI/8)){ 
+					yz0_x = xpos + (t * 2 * pix_per_radius/(yz0_end_theta)); //+ slowly move toward xpos - radius
+					//3 * radius is a diameter
+					yz0_y = ypos - 2*pix_per_radius*Math.cos(t);
+					//5 * radius is two diameters
+					yz0_z = zpos - 4*pix_per_radius*Math.sin(t);
+					
+					slip_array.push(new THREE.Vector3(yz0_x, 
+						yz0_y, yz0_z));
+				}
+
+				xpos = xpos + (2 * pix_per_radius);
+				ypos = ypos -  2 * pix_per_radius * Math.cos(yz0_end_theta);
+				zpos = zpos -  4 * pix_per_radius * Math.sin(yz0_end_theta);
+
+				connector_array = [
+					//connect to end of hook_loop
+					//new THREE.Vector3(xpos, ypos, zpos), 
+					new THREE.Vector3(xpos, ypos, zpos - (1* pix_per_radius)),
+					new THREE.Vector3(xpos, ypos + (1 * pix_per_radius), zpos - (2* pix_per_radius)),
+					new THREE.Vector3(xpos - (1* pix_per_radius), ypos + (2 * pix_per_radius), zpos - (2* pix_per_radius)),
+					new THREE.Vector3(xpos - (2* pix_per_radius), ypos + (2 * pix_per_radius), zpos - (2* pix_per_radius)),
+				];
+				slip_array = slip_array.concat(connector_array);
+				
+				xpos = xpos - (2* pix_per_radius);
+				ypos = ypos + (3 * pix_per_radius);
+				zpos = zpos - (3* pix_per_radius);
+
+				loop_r = hook_r + pix_per_radius;
+				loop_center_x = xpos - loop_r;
+				loop_center_z = zpos + loop_r;
+				loop_array = [];
+
+				loop_start_theta = Math.atan(xpos/zpos);
+				slip_array.push(
+					new THREE.Vector3(loop_center_x + loop_r*Math.cos(loop_start_theta), ypos, 
+						loop_center_z + loop_r*Math.sin(loop_start_theta)));
+
+				loop_theta_d= Math.PI;//angular displacement
+				//start loop at xpos, ypos, zpos
+				//start where sint == cost, or t == pi/4
+				for (var t = loop_start_theta; t <= loop_start_theta + loop_theta_d; t = t + (Math.PI/16)){ 
+					loop_x = loop_center_x - loop_r*Math.cos(t);
+					loop_z = loop_center_z + loop_r*Math.sin(t);
+
+					loop_array.push(new THREE.Vector3(loop_x, ypos, loop_z));
+				}
+				slip_array = slip_array.concat(loop_array);
+				/*loop_curve = new THREE.CatmullRomCurve3(loop_array);
+				loop_geometry = new THREE.TubeGeometry(loop_curve, 64, pix_per_radius);
+				scene_add_geometries.push(loop_geometry);*/
+
+				//end of slip
+				xpos = loop_center_x + loop_r*Math.cos(loop_start_theta + loop_theta_d);
+				zpos = loop_center_z + loop_r*Math.sin(loop_start_theta + loop_theta_d);
+
+				slip_array.push(new THREE.Vector3(startx, starty, zpos - pix_per_radius));
+				slip_array.push(new THREE.Vector3(startx + 3*pix_per_radius, starty, zpos - pix_per_radius));
+
+				slip_curve = new THREE.CatmullRomCurve3(slip_array);
+				slip_geom = new THREE.TubeGeometry(slip_curve, 64, pix_per_radius);
+				scene_add_geometries.push(slip_geom);
+				return slip_geom;
 			}
 
+			stitch_x_change = { //all positive values,
+				//sign is denoted by the direction variable
+				"tail": 10,
+				"slip": 10
+			};
+
+			function draw_scene_geometries(scene_geometries, material){
+				for(var sg = 0; sg < scene_geometries.length; sg++){
+					scene.add(new THREE.Line(scene_geometries[sg], material));
+				}
+			}
 
 			/// Testing specific function calls.
-
 			// tail
-			scene.add(new THREE.Line(
-				tail_geometry(start_x, start_y, start_z), 
-				yarn_material0));
+			tail_geometry(start_x, start_y, start_z);
 			xpos = xpos - tail_length_pixels;
 			// slip stitch
-			scene.add(new THREE.Line(
-				slip_geometry(xpos, ypos, zpos), 
-				yarn_material1));
+			slip_geometry(xpos, ypos, zpos);
+			draw_scene_geometries(scene_add_geometries, yarn_material0);
 
 			function render() {
 				var delta = clock.getDelta();
