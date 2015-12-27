@@ -71,7 +71,7 @@
 			//wraps-per-inch, a standard metric for yarn purchase and storage 
 			var yarn_wpi = 5; // where a wrap is defined as the diameter; wrap = 2 * radius
 			// yarn radius in inches is 1/(2*yarn_wpi)
-			var pix_per_radius = 1; // equiv to yarn radius in pixels
+			var pix_per_radius = 2; // equiv to yarn radius in pixels
 
 			function inches_to_pixels(n_inches){
 				return n_inches * yarn_wpi * 2 * pix_per_radius; 
@@ -99,7 +99,7 @@
 			var y = start_y; //xpos, ypos, zpos used for local positioning
 			var z = start_z; // should be in the same world though, just for differentiation.
 
-			var direction = 1; //always x direction, since y and z should *not* change
+			var direction = -1; //always x direction, since y and z should *not* change
 
 			// Smooth curve over this many points /// delete
 			//var numPoints = 100;
@@ -167,12 +167,12 @@
 					new THREE.Vector3(xpos, ypos, zpos - (1* pix_per_radius)),
 					new THREE.Vector3(xpos, ypos + (1 * pix_per_radius), zpos - (2* pix_per_radius)),
 					new THREE.Vector3(xpos + direction*(1* pix_per_radius), ypos + (2 * pix_per_radius), zpos - (2* pix_per_radius)),
-					new THREE.Vector3(xpos + direction*(2* pix_per_radius), ypos + (2 * pix_per_radius), zpos - (2* pix_per_radius)),
+					new THREE.Vector3(xpos + direction*(2* pix_per_radius), ypos + (1 * pix_per_radius), zpos - (2* pix_per_radius)),
 				];
 				slip_array = slip_array.concat(connector_array);
 				
 				xpos = xpos + direction*(2 * pix_per_radius);
-				ypos = ypos + (3 * pix_per_radius);
+				ypos = ypos; //+ (1 * pix_per_radius);
 				zpos = zpos - (3 * pix_per_radius);
 
 				///
@@ -315,7 +315,7 @@
 
 			draw_to_scene("slip", x, y, z, yarn_material1);
 
-			//draw_to_scene("chain", x, y, z, yarn_material2);
+			draw_to_scene("chain", x, y, z, yarn_material2);
 
 			function render() {
 				var delta = clock.getDelta();
