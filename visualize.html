@@ -71,7 +71,7 @@
 			//wraps-per-inch, a standard metric for yarn purchase and storage 
 			var yarn_wpi = 5; // where a wrap is defined as the diameter; wrap = 2 * radius
 			// yarn radius in inches is 1/(2*yarn_wpi)
-			var pix_per_radius = 2; // equiv to yarn radius in pixels
+			var pix_per_radius = 1; // equiv to yarn radius in pixels
 
 			function inches_to_pixels(n_inches){
 				return n_inches * yarn_wpi * 2 * pix_per_radius; 
@@ -80,24 +80,29 @@
 				return n_pixels * (1/pix_per_radius) * .5 * (1/yarn_wpi); 
 			}
 
+
+			tail_length_inches = 2; 
+			var tail_length_pixels = inches_to_pixels(tail_length_inches); 
+
 			hook_diam_mm = 11.5; //standard hook sizing is hook diameter in mm
 			hook_r_inches = hook_diam_mm/(2*mm_per_inch); //converted to inches 
 			var hook_r = inches_to_pixels(hook_r_inches);
 
 
 			var x_max = window.innerWidth/4/2; //2 for testing only
-			var start_x = x_max;
-
-			var start_y = 000;
+			console.log(x_max);
+			var start_x = x_max; // start_x, start_y, and start_z used for global start
+			var start_y = 000; // startx, starty, startz used for some local start values
 			var start_z = 000;
 
-			var xpos = start_x;
-			var ypos = start_y;
-			var zpos = start_z;
-			var direction = -1; // implement this later
+			var x = start_x; // x, y, z used for global position
+			var y = start_y; //xpos, ypos, zpos used for local positioning
+			var z = start_z; // should be in the same world though, just for differentiation.
 
-			// Smooth curve over this many points
-			var numPoints = 100;
+			var direction = 1; //always x direction, since y and z should *not* change
+
+			// Smooth curve over this many points /// delete
+			//var numPoints = 100;
 
 			// using "_" naming convention for all geometry funcs to 
 			// differentiate custom functions and THREE.js builtins
@@ -118,32 +123,27 @@
 			// Makes a (starting) tail yarn end 
 			// starting at (xpos, ypos, zpos)
 			function tail_geometry(xpos, ypos, zpos){
-				tail_length_inches = 2; 
-				tail_length_pixels = inches_to_pixels(tail_length_inches); 
-
-				//n_points = 100;
-
 				tail_curve = new THREE.CatmullRomCurve3([
 				   new THREE.Vector3(xpos, ypos, zpos),
-				   new THREE.Vector3(xpos - (tail_length_pixels/2), ypos - (tail_length_pixels/5), zpos),
-				   new THREE.Vector3(xpos - tail_length_pixels, ypos, zpos),
+				   new THREE.Vector3(xpos + direction*(tail_length_pixels/2), ypos - (tail_length_pixels/5), zpos),
+				   new THREE.Vector3(xpos + direction*tail_length_pixels, ypos, zpos),
 				]);
 				tail_geom = new THREE.TubeGeometry(tail_curve, 64, pix_per_radius);
 				return tail_geom;
 			}
 
-			function slip_geometry(start_x, start_y, start_z){
-				slip_array = [new THREE.Vector3(start_x, start_y, start_z)];
+			function slip_geometry(startx, starty, startz){
+				slip_array = [new THREE.Vector3(startx, starty, startz)];
 
-				xpos = start_x;
-				ypos = start_y;
-				zpos = start_z;
+				xpos = startx;
+				ypos = starty;
+				zpos = startz;
+				console.log(xpos, ypos, zpos);
 
 				yzloop_end_theta = (2*math.pi);
-				//ellipse with an innerheight of yarn radius and innerwidth of 2*yarn radius
 
 				for (var t = 0; t < yzloop_end_theta + (math.pi/8); t = t + (math.pi/8)){ 
-					yz_x = xpos + ((t * 2 * pix_per_radius)/(yzloop_end_theta)); 
+					yz_x = xpos - direction*((t * 2 * pix_per_radius)/(yzloop_end_theta)); 
 					//x slowly moves toward xpos + 2* radius
 					yz_y = ypos - (2*pix_per_radius*Math.cos(t));
 					yz_z = zpos - (4*pix_per_radius*Math.sin(t));
@@ -154,7 +154,7 @@
 					// the end points for yzloop, due to precision problems for Math.pi, making t off significantly from
 					// yzloop_end_theta 
 					// have reverted back to just making the wanted end point values here. 
-						xpos = xpos + (2 * pix_per_radius);
+						xpos = xpos - direction*(2 * pix_per_radius);
 						ypos = ypos -  (2 * pix_per_radius * Math.cos(yzloop_end_theta));
 						zpos = zpos -  (4 * pix_per_radius * Math.sin(yzloop_end_theta));
 					}
@@ -166,17 +166,81 @@
 					new THREE.Vector3(xpos, ypos, zpos), 
 					new THREE.Vector3(xpos, ypos, zpos - (1* pix_per_radius)),
 					new THREE.Vector3(xpos, ypos + (1 * pix_per_radius), zpos - (2* pix_per_radius)),
-					new THREE.Vector3(xpos - (1* pix_per_radius), ypos + (2 * pix_per_radius), zpos - (2* pix_per_radius)),
-					new THREE.Vector3(xpos - (2* pix_per_radius), ypos + (2 * pix_per_radius), zpos - (2* pix_per_radius)),
+					new THREE.Vector3(xpos + direction*(1* pix_per_radius), ypos + (2 * pix_per_radius), zpos - (2* pix_per_radius)),
+					new THREE.Vector3(xpos + direction*(2* pix_per_radius), ypos + (2 * pix_per_radius), zpos - (2* pix_per_radius)),
 				];
 				slip_array = slip_array.concat(connector_array);
 				
-				xpos = xpos - (2 * pix_per_radius);
+				xpos = xpos + direction*(2 * pix_per_radius);
 				ypos = ypos + (3 * pix_per_radius);
 				zpos = zpos - (3 * pix_per_radius);
 
 				///
 				loop_r = hook_r + pix_per_radius;
+				loop_center_x = xpos + direction*loop_r;
+				loop_center_z = zpos + loop_r;
+				loop_array = [];
+
+				loop_start_theta = Math.atan(xpos/zpos);
+				slip_array.push(
+					new THREE.Vector3(loop_center_x + loop_r*math.cos(loop_start_theta), ypos, 
+						loop_center_z + loop_r*math.sin(loop_start_theta)));
+
+				loop_theta_d= math.pi;//angular displacement
+
+				for (var t = loop_start_theta; t <= loop_start_theta + loop_theta_d; t = t + (math.pi/16)){ 
+					loop_x = loop_center_x + direction*loop_r*math.cos(t);
+					loop_z = loop_center_z + loop_r*math.sin(t);
+
+					loop_array.push(new THREE.Vector3(loop_x, ypos, loop_z));
+
+					if (t == loop_start_theta + loop_theta_d){
+						xpos = loop_x;
+						zpos = loop_z;
+					}
+				}
+				slip_array = slip_array.concat(loop_array);
+
+				//end of slip, after hook loop
+				slip_array.push(new THREE.Vector3(startx, starty, zpos - pix_per_radius));
+				slip_array.push(new THREE.Vector3(startx + 3*pix_per_radius, starty, zpos - pix_per_radius));
+				slip_array.push(new THREE.Vector3(startx + 3*pix_per_radius, starty, zpos - pix_per_radius));
+
+				xpos = startx - direction*3*pix_per_radius;
+				ypos = starty;
+				zpos = zpos - pix_per_radius;
+				//curve back around to "point" in the correct direction
+				//curve on the xy plane
+				
+				reorient_center_x = xpos + direction*2*pix_per_radius;
+				reorient_center_y = ypos - 4*pix_per_radius;
+
+				reorient_start_theta =  7*math.pi/4;
+				reorient_displacement = 5*math.pi/4;
+
+				reorient_array = [new THREE.Vector3(reorient_center_x - direction*3*pix_per_radius*math.cos(reorient_start_theta),
+					reorient_center_y - 1*pix_per_radius*math.sin(reorient_start_theta),
+					zpos - ((reorient_start_theta * 2 * pix_per_radius)/(reorient_start_theta + reorient_displacement))),
+				new THREE.Vector3(reorient_center_x,
+					reorient_center_y - 1*pix_per_radius*math.sin(reorient_start_theta),
+					startz),
+				new THREE.Vector3(startx +direction*2*pix_per_radius,
+					starty,
+					startz)
+				];
+
+				slip_array = slip_array.concat(reorient_array);
+
+				slip_curve = new THREE.CatmullRomCurve3(slip_array);
+				slip_geom = new THREE.TubeGeometry(slip_curve, 64, pix_per_radius);
+				return slip_geom;
+			}
+
+			function chain_geometry(start_x, start_y, start_z){
+				chain_array = [new THREE.Vector3(start_x, start_y, start_z), 
+				new THREE.Vector3(start_x-10, start_y, start_z), ];
+
+				/*loop_r = hook_r + pix_per_radius;
 				loop_center_x = xpos - loop_r;
 				loop_center_z = zpos + loop_r;
 				loop_array = [];
@@ -199,46 +263,28 @@
 						zpos = loop_z;
 					}
 				}
-				slip_array = slip_array.concat(loop_array);
-
-				//end of slip, after hook loop
-				slip_array.push(new THREE.Vector3(start_x, start_y, zpos - pix_per_radius));
-				slip_array.push(new THREE.Vector3(start_x + 3*pix_per_radius, start_y, zpos - pix_per_radius));
-				slip_array.push(new THREE.Vector3(start_x + 3*pix_per_radius, start_y, zpos - pix_per_radius));
-
-				xpos = start_x + 3*pix_per_radius;
-				ypos = start_y;
-				zpos = zpos - pix_per_radius;
-				//curve back around to "point" in the correct direction
-				//curve on the xy plane
-				
-				reorient_center_x = xpos - 2*pix_per_radius;
-				reorient_center_y = ypos - 4*pix_per_radius;
-
-				reorient_start_theta =  7*math.pi/4;
-				reorient_displacement = 5*math.pi/4;
-
-				reorient_array = [new THREE.Vector3(reorient_center_x + 3*pix_per_radius*math.cos(reorient_start_theta),
-					reorient_center_y - 1*pix_per_radius*math.sin(reorient_start_theta),
-					zpos - ((reorient_start_theta * 2 * pix_per_radius)/(reorient_start_theta + reorient_displacement))),
-				new THREE.Vector3(reorient_center_x,
-					reorient_center_y - 1*pix_per_radius*math.sin(reorient_start_theta),
-					start_z),
-				new THREE.Vector3(start_x - 2*pix_per_radius,
-					start_y,
-					start_z)
-				];
-				slip_array = slip_array.concat(reorient_array);
-
-				slip_curve = new THREE.CatmullRomCurve3(slip_array);
-				slip_geom = new THREE.TubeGeometry(slip_curve, 64, pix_per_radius);
-				return slip_geom;
+				chain_array = chain_array.concat(loop_array);*/
+				chain_curve = new THREE.CatmullRomCurve3(chain_array);
+				chain_geom = new THREE.TubeGeometry(chain_curve, 64, pix_per_radius);
+				return chain_geom;
 			}
 
 			stitch_x_mag = { //magnitudes
 				//all positive values, sign is denoted by the direction variable
-				"tail": 10,
-				"slip": 10
+				// in pixels
+				"tail": tail_length_pixels,
+				"slip": 2*pix_per_radius,
+				"chain": 0
+			};
+			stitch_y_mag = {
+				"tail": 0,
+				"slip": 0,
+				"chain": 0
+			};
+			stitch_z_mag = {
+				"tail": 0,
+				"slip": 0,
+				"chain": 0
 			};
 
 			///////////// SCENE ADD ////////////
@@ -250,21 +296,26 @@
 				}
 			} 
 
-			function draw_to_scene(stitch, x, y, z, material){
+			function draw_to_scene(stitch, xpos, ypos, zpos, material){
 				geom_call = stitch + "_geometry";
-				stitch_geometry = window[geom_call](x, y, z); //calls correct symbol based on funcname
+				stitch_geometry = window[geom_call](xpos, ypos, zpos); //calls correct symbol based on funcname
 				scene.add(new THREE.Line(stitch_geometry, material)); 
 				//create THREE.Line instead for unfilled model (better able to see individual lines),
 				// THREE.Mesh for a smoother model
+
+				x = x + direction * stitch_x_mag[stitch];
+				y = y - stitch_y_mag[stitch];
+				z = z - stitch_z_mag[stitch];
+				console.log("new coords after "+stitch, x, y, z);
 			}
 
 			/// Testing specific function calls.
+			draw_to_scene("tail", x, y, z, yarn_material0);
+			console.log(x, y, z);
 
-			// tail
-			draw_to_scene("tail", start_x, start_y, start_z, yarn_material0);
-			xpos = xpos - tail_length_pixels;
-			// slip stitch
-			draw_to_scene("slip", xpos, ypos, zpos, yarn_material2);
+			draw_to_scene("slip", x, y, z, yarn_material1);
+
+			//draw_to_scene("chain", x, y, z, yarn_material2);
 
 			function render() {
 				var delta = clock.getDelta();
