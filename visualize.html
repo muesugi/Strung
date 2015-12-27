@@ -11,16 +11,15 @@
 		<link rel="stylesheet" href="css/custom.css">
 		<link rel="stylesheet" href="css/visualize.css">
 		<script type="text/javascript">
-		/// set up any formulas and formal definitions
+		
 			function getWindowWidth() {
 				return window.innerWidth||document.documentElement.clientWidth||document.body.clientWidth||0;
 			}
 			function getWindowHeight() {
 				return window.innerHeight||document.documentElement.clientHeight||document.body.clientHeight||0;
 			}	
-			var mm_per_inch = 25.4;
 
-			/*THREE.CylinderCurvedSurfaceGeometry = function(radius, height, startAngle, endAngle, horizontalSegments, verticalSegments) {
+			THREE.CylinderCurvedSurfaceGeometry = function(radius, height, startAngle, endAngle, horizontalSegments, verticalSegments) {
 				//optional params
 				startAngle = startAngle || Math.PI/2;
 				endAngle = endAngle || Math.PI;
@@ -42,7 +41,7 @@
 			    }
 
 			    return plane;
-			}*/
+			}
 
 		</script>
 
@@ -82,13 +81,19 @@
 			cameraControls.target.set(0, 0, 0);
 			var clock = new THREE.Clock();
 
+			//// Three.js settings for all stitches //////
+			//var yarn_geometry = new THREE.CylinderGeometry(.1, .1, 2, 20);
+			var yarn_material0 = new THREE.MeshBasicMaterial( {color: "red"});
+			var yarn_material1 = new THREE.MeshBasicMaterial( {color: "black"});
+			var yarn_material2 = new THREE.MeshBasicMaterial( {color: "green"});
+			var yarn_material3 = new THREE.MeshBasicMaterial( {color: "blue"});
+
 			//scaling depends on yarn being used
 			//as wpi gets larger, "zoom in" closer--> set yarn radius (in inches) to pixel ratio for simplicity
 			//wraps-per-inch, a standard metric for yarn purchase and storage 
 			var yarn_wpi = 5; // where a wrap is defined as the diameter; wrap = 2 * radius
 			// yarn radius in inches is 1/(2*yarn_wpi)
-			var pix_per_radius = 2; // equiv to yarn radius in pixels
-			// 2 for standard/view mode, 10 for "loosening"
+			var pix_per_radius = 1; // equiv to yarn radius in pixels
 
 			function inches_to_pixels(n_inches){
 				return n_inches * yarn_wpi * 2 * pix_per_radius; 
@@ -97,17 +102,7 @@
 				return n_pixels * (1/pix_per_radius) * .5 * (1/yarn_wpi); 
 			}
 
-			//// Three.js settings for all stitches //////
-			//var yarn_geometry = new THREE.CylinderGeometry(.1, .1, 2, 20);
-			var yarn_material0 = new THREE.MeshBasicMaterial( {color: "red"});
-			var yarn_material1 = new THREE.MeshBasicMaterial( {color: "black"});
-			var yarn_material2 = new THREE.MeshBasicMaterial( {color: "green"});
-			var yarn_material3 = new THREE.MeshBasicMaterial( {color: "blue"});
-			hook_diam_mm = 11.5; //standard hook sizing is hook diameter in mm
-			hook_r_inches = hook_diam_mm/(2*mm_per_inch); //converted to inches 
-			var hook_r = inches_to_pixels(hook_r_inches);
-
-			var x_max = window.innerWidth/4/2; //affects centering off piece
+			var x_max = window.innerWidth/4/2; //2 for testing only
 			var start_x = x_max;
 
 			var start_y = 000;
@@ -120,8 +115,6 @@
 
 			// Smooth curve over this many points
 			var numPoints = 100;
-			var scene_add_geometries = []; //will add all at once later
-			//to facillitate generation of multiple geometries in function calls
 
 			// using "_" naming convention for all geometry funcs to 
 			// differentiate custom functions and THREE.js builtins
@@ -145,18 +138,19 @@
 				tail_length_inches = 2; 
 				tail_length_pixels = inches_to_pixels(tail_length_inches); 
 
+				//n_points = 100;
+
 				tail_curve = new THREE.CatmullRomCurve3([
 				   new THREE.Vector3(xpos, ypos, zpos),
 				   new THREE.Vector3(xpos - (tail_length_pixels/2), ypos - (tail_length_pixels/5), zpos),
 				   new THREE.Vector3(xpos - tail_length_pixels, ypos, zpos),
 				]);
-				tail_geom = new THREE.TubeGeometry(tail_curve, 64, pix_per_radius);
 
-				scene_add_geometries.push(tail_geom)
-				return tail_geom;
+				return new THREE.TubeGeometry(tail_curve);
 				//return geometry_from_curve(n_points, tail_curve);
 			}
 
+<<<<<<< HEAD
 			function slip_geometry(start_x, start_y, start_z){
 				//starts at xpos, ypos, zpos
 				xpos = start_x;
@@ -248,14 +242,83 @@
 					scene.add(new THREE.Line(scene_geometries[sg], material));
 				}
 			}
+=======
+			function slip_geometry(xpos, ypos, zpos){
+				var n_points = 100;
+
+				slip_curve = new THREE.CatmullRomCurve3([
+				
+					//always include start point
+					new THREE.Vector3(xpos, ypos, zpos), 
+					// loop 1 (flat on yz plane)
+					new THREE.Vector3(xpos-(2*pix_per_radius), ypos, 
+				    	zpos),
+					///////
+				    new THREE.Vector3(xpos-(3*pix_per_radius), 
+				    	ypos-(2*pix_per_radius), 
+				    	zpos-(2*pix_per_radius)),
+				    new THREE.Vector3(xpos-(2*pix_per_radius), 
+				    	ypos-(1*pix_per_radius), 
+				    	zpos-(3*pix_per_radius)),
+				    new THREE.Vector3(xpos-(1*pix_per_radius), 
+				    	ypos, 
+				    	zpos-(3*pix_per_radius)),
+				    new THREE.Vector3(xpos, ypos, 
+				    	zpos+(1*pix_per_radius)),
+				    new THREE.Vector3(xpos, 
+				    	ypos-(1*pix_per_radius), 
+				    	zpos+(2*pix_per_radius)),
+				    new THREE.Vector3(xpos-(1*pix_per_radius), 
+				    	ypos-(2*pix_per_radius), 
+				    	zpos),
+
+				    new THREE.Vector3(xpos-(3*pix_per_radius), 
+				    	ypos-(1*pix_per_radius), 
+				    	zpos-(2*pix_per_radius)),
+
+				    //loop (laying flat on xz plane)
+				    new THREE.Vector3(xpos-(9*pix_per_radius), ypos, 
+				    	zpos-(4*pix_per_radius)),
+				    new THREE.Vector3(xpos-(10*pix_per_radius), ypos-(1*pix_per_radius), 
+				    	zpos-(1*pix_per_radius)),
+				    new THREE.Vector3(xpos-(9*pix_per_radius), ypos-(1*pix_per_radius), 
+				    	zpos+(1*pix_per_radius)),
+				    new THREE.Vector3(xpos-(3*pix_per_radius), ypos-(1*pix_per_radius), 
+				    	zpos+(1*pix_per_radius)),
+				    new THREE.Vector3(xpos-(3*pix_per_radius), ypos-(1*pix_per_radius), 
+				    	zpos+(1*pix_per_radius)),
+
+				    new THREE.Vector3(xpos, ypos-(1*pix_per_radius), zpos+(1*pix_per_radius)),
+
+				    //turnaround to start next stitch
+				    new THREE.Vector3(xpos+(1*pix_per_radius),
+				    	ypos-(2*pix_per_radius), 
+				    	zpos+(1*pix_per_radius)),
+				    new THREE.Vector3(xpos+(0*pix_per_radius),
+				    	ypos-(3*pix_per_radius), 
+				    	zpos+(1*pix_per_radius)),
+				    new THREE.Vector3(xpos-(20*pix_per_radius),
+				    	ypos-(3*pix_per_radius), 
+				    	zpos)
+				]);
+
+				return new THREE.TubeGeometry(slip_curve);
+				//return path_geometry_from_curve(n_points, slip_curve);
+			}
+
+>>>>>>> parent of fdd1d15... Slip stitch using polar/spherical coordinates
 
 			/// Testing specific function calls.
+
 			// tail
-			tail_geometry(start_x, start_y, start_z);
+			scene.add(new THREE.Line(
+				tail_geometry(start_x, start_y, start_z), 
+				yarn_material0));
 			xpos = xpos - tail_length_pixels;
 			// slip stitch
-			slip_geometry(xpos, ypos, zpos);
-			draw_scene_geometries(scene_add_geometries, yarn_material0);
+			scene.add(new THREE.Line(
+				slip_geometry(xpos, ypos, zpos), 
+				yarn_material1));
 
 			function render() {
 				var delta = clock.getDelta();
