@@ -157,115 +157,35 @@
 				//return geometry_from_curve(n_points, tail_curve);
 			}
 
-			function slip_geometry(xpos, ypos, zpos){
-				/* ///v1
-				var n_points = 100;
-
-				slip0_curve = new THREE.CatmullRomCurve3([
-					//always include start point
-					new THREE.Vector3(xpos, ypos, zpos), 
-					// loop 1 (flat on yz plane)
-					new THREE.Vector3(xpos-(2*pix_per_radius), ypos, 
-				    	zpos),
-					///////
-				    new THREE.Vector3(xpos-(3*pix_per_radius), 
-				    	ypos-(2*pix_per_radius), 
-				    	zpos-(2*pix_per_radius)),
-				    new THREE.Vector3(xpos-(2*pix_per_radius), 
-				    	ypos-(1*pix_per_radius), 
-				    	zpos-(2*pix_per_radius)),
-				    new THREE.Vector3(xpos-(1*pix_per_radius), 
-				    	ypos, 
-				    	zpos-(2*pix_per_radius)),
-				    new THREE.Vector3(xpos, ypos, 
-				    	zpos+(1*pix_per_radius)),
-				    new THREE.Vector3(xpos, 
-				    	ypos-(1*pix_per_radius), 
-				    	zpos+(2*pix_per_radius)),
-				    new THREE.Vector3(xpos-(1*pix_per_radius), 
-				    	ypos-(2*pix_per_radius), 
-				    	zpos),
-
-				    new THREE.Vector3(xpos-(3*pix_per_radius), 
-				    	ypos-(1*pix_per_radius), 
-				    	zpos-(2*pix_per_radius))]);
-
-				slip0_geometry = new THREE.TubeGeometry(slip0_curve);
-				scene_add_geometries.push(slip0_geometry);
-
-				hook_loop_start_x = xpos-(3*pix_per_radius);
-				hook_loop_start_y = ypos-(1*pix_per_radius); //y should remain same
-				hook_loop_start_z = zpos-(2*pix_per_radius);
-
-				end_theta = 5*Math.PI/8;
-
-				loop_array = [new THREE.Vector3(hook_loop_start_x, hook_loop_start_y, hook_loop_start_z)];
-				//polar/spherical coordinates
-				for (var t = 0; t <= end_theta; t = t + (Math.PI/16)){ 
-					loop_x = hook_loop_start_x - hook_r*Math.cos(t);
-					loop_z = hook_loop_start_z + hook_r*Math.sin(t);
-
-					loop_array.push(new THREE.Vector3(loop_x, hook_loop_start_y, loop_z));
-				}
-
-				hook_loop = new THREE.CatmullRomCurve3(loop_array);
-				hook_geometry = new THREE.TubeGeometry(hook_loop);
-				scene_add_geometries.push(hook_geometry);
-
-				hook_loop_end_x = hook_loop_start_x - hook_r*Math.cos(end_theta);
-				hook_loop_end_z = hook_loop_start_z + hook_r*Math.sin(end_theta);
-
-				slip1_curve = new THREE.CatmullRomCurve3([
-					//connect to end of hook_loop
-					new THREE.Vector3(hook_loop_end_x, hook_loop_start_y, hook_loop_end_z),
-
-					new THREE.Vector3(xpos, ypos-(1*pix_per_radius), zpos+(1*pix_per_radius)),
-
-				    //turnaround to start next stitch
-				    new THREE.Vector3(xpos+(1*pix_per_radius),
-				    	ypos-(2*pix_per_radius), 
-				    	zpos+(1*pix_per_radius)),
-				    new THREE.Vector3(xpos+(0*pix_per_radius),
-				    	ypos-(3*pix_per_radius), 
-				    	zpos+(1*pix_per_radius)),
-				    new THREE.Vector3(xpos-(20*pix_per_radius),
-				    	ypos-(3*pix_per_radius), 
-				    	zpos)
-				]);
-				slip1_geometry = new THREE.TubeGeometry(slip1_curve);
-				scene_add_geometries.push(slip1_geometry);
-				//return new THREE.TubeGeometry(slip_curve);
-				//return path_geometry_from_curve(n_points, slip_curve);
-				*/
-				//v2 
+			function slip_geometry(start_x, start_y, start_z){
 				//starts at xpos, ypos, zpos
-				startx = xpos;
-				starty = ypos;
-				startz = zpos;
-				console.log(startz);
-				slip_array = [new THREE.Vector3(xpos, ypos, zpos)];
-				yz0_end_theta = 16*Math.PI/8
+				xpos = start_x;
+				ypos = start_y;
+				zpos = start_z;
 
+				slip_array = [new THREE.Vector3(xpos, ypos, zpos)];
+				yz0_end_theta = 16*Math.PI/8;
 				//polar/spherical coordinates
 				//ellipse with an innerheight of yarn radius and innerwidth of 2*yarn radius
 				for (var t = 0; t <= yz0_end_theta; t = t + (Math.PI/8)){ 
 					yz0_x = xpos + (t * 2 * pix_per_radius/(yz0_end_theta)); //+ slowly move toward xpos - radius
-					//3 * radius is a diameter
+					//2 * radius is a diameter
 					yz0_y = ypos - 2*pix_per_radius*Math.cos(t);
-					//5 * radius is two diameters
+					//4 * radius is two diameters
 					yz0_z = zpos - 4*pix_per_radius*Math.sin(t);
 					
 					slip_array.push(new THREE.Vector3(yz0_x, 
 						yz0_y, yz0_z));
+					if (t == yz0_end_theta){
+						xpos = yz0_x;
+						ypos = yz0_y;
+						zpos = yz0_z;
+					}
 				}
 
-				xpos = xpos + (2 * pix_per_radius);
-				ypos = ypos -  2 * pix_per_radius * Math.cos(yz0_end_theta);
-				zpos = zpos -  4 * pix_per_radius * Math.sin(yz0_end_theta);
-
+				///
 				connector_array = [
-					//connect to end of hook_loop
-					//new THREE.Vector3(xpos, ypos, zpos), 
+					//connect to end of hook_loop 
 					new THREE.Vector3(xpos, ypos, zpos - (1* pix_per_radius)),
 					new THREE.Vector3(xpos, ypos + (1 * pix_per_radius), zpos - (2* pix_per_radius)),
 					new THREE.Vector3(xpos - (1* pix_per_radius), ypos + (2 * pix_per_radius), zpos - (2* pix_per_radius)),
@@ -277,6 +197,7 @@
 				ypos = ypos + (3 * pix_per_radius);
 				zpos = zpos - (3* pix_per_radius);
 
+				///
 				loop_r = hook_r + pix_per_radius;
 				loop_center_x = xpos - loop_r;
 				loop_center_z = zpos + loop_r;
@@ -295,18 +216,16 @@
 					loop_z = loop_center_z + loop_r*Math.sin(t);
 
 					loop_array.push(new THREE.Vector3(loop_x, ypos, loop_z));
+					if (t == loop_start_theta + loop_theta_d){
+						xpos = loop_x;
+						zpos = loop_z;
+					}
 				}
 				slip_array = slip_array.concat(loop_array);
-				/*loop_curve = new THREE.CatmullRomCurve3(loop_array);
-				loop_geometry = new THREE.TubeGeometry(loop_curve, 64, pix_per_radius);
-				scene_add_geometries.push(loop_geometry);*/
 
-				//end of slip
-				xpos = loop_center_x + loop_r*Math.cos(loop_start_theta + loop_theta_d);
-				zpos = loop_center_z + loop_r*Math.sin(loop_start_theta + loop_theta_d);
-
-				slip_array.push(new THREE.Vector3(startx, starty, zpos - pix_per_radius));
-				slip_array.push(new THREE.Vector3(startx + 3*pix_per_radius, starty, zpos - pix_per_radius));
+				//finish slip
+				slip_array.push(new THREE.Vector3(start_x, start_y, zpos - pix_per_radius));
+				slip_array.push(new THREE.Vector3(start_x + 3*pix_per_radius, start_y, zpos - pix_per_radius));
 
 				slip_curve = new THREE.CatmullRomCurve3(slip_array);
 				slip_geom = new THREE.TubeGeometry(slip_curve, 64, pix_per_radius);
@@ -314,8 +233,8 @@
 				return slip_geom;
 			}
 
-			stitch_x_change = { //all positive values,
-				//sign is denoted by the direction variable
+			stitch_x_mag = { //magnitudes
+				//all positive values, sign is denoted by the direction variable
 				"tail": 10,
 				"slip": 10
 			};
