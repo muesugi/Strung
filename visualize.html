@@ -12,7 +12,7 @@
 		<link rel="stylesheet" href="css/custom.css">
 		<link rel="stylesheet" href="css/visualize.css">
 		<script type="text/javascript">
-		
+			// define 
 			function getWindowWidth() {
 				return window.innerWidth||document.documentElement.clientWidth||document.body.clientWidth||0;
 			}
@@ -34,6 +34,9 @@
 		<a class="site_nav" id="visualize" href="visualize.html">Visualize</a><!--86.4844px-->
 		<a class="site_nav" id="chartify" href="chartify.html">Chartify</a> <!--79.8438px-->
 	</div>
+
+	<textarea id="textarea" spellcheck=false placeholder="chain(15); turn(); single(10); turn(); double(10); turn();"></textarea>
+	
 		<script type="text/javascript">
 			header_spacing();
 			function header_spacing(){
@@ -324,9 +327,10 @@
 				}
 			} 
 
-			function draw_to_scene(stitch, xpos, ypos, zpos, material){
+			function draw_to_scene(stitch, material){
+				material = material || yarn_material1; 
 				geom_call = stitch + "_geometry";
-				stitch_geometry = window[geom_call](xpos, ypos, zpos); //calls correct symbol based on funcname
+				stitch_geometry = window[geom_call](x, y, z); //calls correct symbol based on funcname
 				scene.add(new THREE.Mesh(stitch_geometry, material)); 
 				//create THREE.Line instead for unfilled model (better able to see individual lines),
 				// THREE.Mesh for a smoother model
@@ -337,17 +341,12 @@
 			}
 
 			/// Testing specific function calls.
-			draw_to_scene("tail", x, y, z, yarn_material0);
+			draw_to_scene("tail", yarn_material0);
 			console.log(x, y, z);
 
-			draw_to_scene("slip", x, y, z, yarn_material1);
+			draw_to_scene("slip", yarn_material1);
 
-			draw_to_scene("chain", x, y, z, yarn_material2);
-			draw_to_scene("chain", x, y, z, yarn_material2);
-			draw_to_scene("chain", x, y, z, yarn_material2);
-			draw_to_scene("chain", x, y, z, yarn_material2);draw_to_scene("chain", x, y, z, yarn_material2);
-			draw_to_scene("chain", x, y, z, yarn_material2);draw_to_scene("chain", x, y, z, yarn_material2);
-			draw_to_scene("chain", x, y, z, yarn_material2);draw_to_scene("chain", x, y, z, yarn_material2);
+			draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);
 
 			function render() {
 				var delta = clock.getDelta();
@@ -357,7 +356,91 @@
 			}
 			render();
 
+
+			/// TEXTAREA INPUT
+
+			$("#textarea").keypress(function(event){
+			    if (event.which == 59){ // on semicolon, parse input
+			    	//establish defaults
+			    	default_and_parse();
+			    }
+			})
+
+			function default_and_parse(){
+				//ypos_0 = $("#container").height() - 80;
+				x = start_x;
+				y = start_y;
+				z = start_z;
+				direction = -1;
+				row_max_height = 0;
+				scene = new THREE.Scene();
+				/*past_row_widths = [];
+				cur_row_widths = [];
+				paper.clear();//redraw every time	*/
+
+		    	parse_input($("#textarea").val()); //style choice to pass the string. 
+			}
+
+			function parse_input(pattern_string){
+				clean_pattern = pattern_string.replace(/\s+/g, '');
+				func_call_strings = clean_pattern.split(";");
+				//split separates different functions, slice removes the last (empty) element caused by the last ";"
+
+				cur_mat = yarn_material1;
+
+				f = 0;
+				while ((f < func_call_strings.length) && (func_call_strings[f] !== "")){
+					//while loop instead of for loop for repeat implementation.
+
+					split_func_call = func_call_strings[f].split("(");
+					// [0]: function name, [1]: function arguments (+ ")" in most cases)
+					func_name = (split_func_call[0]).toLowerCase();
+					if (f == 0){
+						draw_to_scene("tail"); //add material here
+						draw_to_scene("slip");
+					}
+
+					/*if (func_name == "turn"){ turn(); }
+					else if (func_name == "color"){}
+					else if (func_name == "repeat"){
+						to_parse = func_call_strings[f].substring(7)+";"; //"repeat(" has 7 characters
+
+						while (f < func_call_strings.length){
+							f++;
+							next_split = func_call_strings[f];
+							// EG "treble(2)"
+
+							if (next_split.indexOf(',') < 0){
+								to_parse = to_parse + next_split + ";";
+							}
+							else{ break;}
+						}
+
+						//removes "," since it should be the zero-th char in this string 
+						// as well as the last character, ")"
+						n_repeats = Number(next_split.slice(1, -1));
+
+						for(r = 0; r < n_repeats; r++){
+							parse_input(to_parse);
+						}
+					}
+
+
+					else{*/
+						//cut off last ")" char
+						n_stitches = Number(split_func_call[1].slice(0, -1));		
+						
+						for (var s = 0; s < n_stitches; s++){
+							draw_to_scene(func_name);
+						}
+					//}	
+
+					f++;
+				}
+			}
+
 		</script>
+		
 	</body>
 </html>
 	
