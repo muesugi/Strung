@@ -58,7 +58,7 @@
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			document.body.appendChild(renderer.domElement);
 
-			var x_max = window.innerWidth/4; //2 for testing only
+			var x_max = window.innerWidth/4/2; //2 for testing only
 			var start_x = x_max; // start_x, start_y, and start_z used for global start
 			var start_y = 000; // startx, starty, startz used for some local start values
 			var start_z = 000;
@@ -107,6 +107,7 @@
 			var hook_r = inches_to_pixels(hook_r_inches);
 
 			var last_stitch = undefined;
+			var cur_stitch = undefined;
 			var row_max_height = 0;
 			var tailed = false;
 			var past_row_widths = [];
@@ -272,7 +273,7 @@
 
 				for (var t = loop_start_theta; t <= loop_start_theta + loop_theta_d; t = t + (math.pi/16)){ 
 					loop_x = loop_center_x + direction*loop_r*math.cos(t);
-					loop_y = ypos; //- 2*pix_per_radius*(loop_x/xpos);// - (2*pix_per_radius);""
+					loop_y = ypos; //- 2*t*Math.abs(loop_x/xpos);// - (2*pix_per_radius);""
 					if (loop_x < loop_x_min){loop_x_min = loop_x;}
 					loop_z = loop_center_z + loop_r*math.sin(t);
 
@@ -288,6 +289,9 @@
 				//hook in previous loop
 				if (last_stitch == "slip"){
 					hook_xpos = startx + direction*3*pix_per_radius;
+				}
+				else if (cur_stitch == "v_chain" || cur_stitch == "v_chain_with_twist"){
+					hook_xpos = startx - direction*2*pix_per_radius;
 				}
 				else{ hook_xpos = startx; }
 				chain_array.push(new THREE.Vector3(
@@ -409,21 +413,19 @@
 				chain_last = chain_array.pop();
 				chain_array.push(chain_last);
 
-				xpos = post_startx = chain_last.x;
-				ypos = post_starty = chain_last.y;
-				zpos = post_startz = chain_last.z;
+				xpos = post_startx = chain_last.x + pix_per_radius;
+				ypos = post_starty = chain_last.y + pix_per_radius;
+				zpos = post_startz = chain_last.z + pix_per_radius;
 
-				chain_array = chain_array.concat(
-				[new THREE.Vector3(xpos, ypos, zpos), new THREE.Vector3(xpos + direction*2*pix_per_radius, ypos + 2*pix_per_radius, zpos + pix_per_radius)]);
-				
-				post_chain_array = [new THREE.Vector3(xpos + direction*2*pix_per_radius, ypos + 2*pix_per_radius, zpos + pix_per_radius)];
-				xpos = xpos + direction*2*pix_per_radius;
-				ypos = ypos + 2 *pix_per_radius
-				zpos = zpos + pix_per_radius;
+				chain_post_intersect = new THREE.Vector3(
+					xpos, ypos, zpos);
+				chain_array.push(chain_post_intersect);
+
+				post_chain_array = [chain_post_intersect]; //connect the two geometries explicitly
 
 				loop_r = hook_r + pix_per_radius;
 				loop_center_x = xpos + direction*loop_r;
-				loop_center_z = zpos - loop_r;
+				loop_center_z = zpos; // maybe make this related to direction?
 
 
 				loop_start_theta = -3*math.pi/2;
@@ -441,7 +443,8 @@
 				}
 
 				crossover_array = 
-				[new THREE.Vector3(post_startx + direction*2*pix_per_radius, post_starty + 2*pix_per_radius, (post_startz + zpos)/2),
+				[new THREE.Vector3(post_startx + direction*2*pix_per_radius, 
+					post_starty + pix_per_radius, (post_startz + zpos)/2),
 				new THREE.Vector3(post_startx - direction*2*pix_per_radius, 
 					post_starty - 1*pix_per_radius, 
 					post_startz + 2*pix_per_radius),
@@ -468,7 +471,7 @@
 				post_chain_geom.translate(startx, starty + (startx - post_startx), startz);
 				//merge geoms
 				//post_chain_geom.updateMatrix();
-				//chain_geom.merge(post_chain_geom, post_chain_geom.matrix);
+				chain_geom.merge(post_chain_geom, post_chain_geom.matrix);
 				return chain_geom;//v_chain_geom;
 			}
 
@@ -514,7 +517,8 @@
 			} 
 
 			function draw_to_scene(stitch, material){
-				material = material || yarn_material1; 
+				material = material || yarn_material1;//should never be called, but just in case
+				cur_stitch = stitch;
 				geom_call = stitch + "_geometry";
 				stitch_geometry = window[geom_call](x, y, z); //calls correct symbol based on funcname
 				scene.add(new THREE.Line(stitch_geometry, material)); 
@@ -534,6 +538,7 @@
 			draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);
 
 			draw_to_scene("v_chain_with_twist", yarn_material3);
+			draw_to_scene("chain", yarn_material2);
 
 			function render() {
 				var delta = clock.getDelta();
@@ -561,6 +566,7 @@
 				direction = -1;
 				row_max_height = 0;
 				last_stitch = undefined;
+				cur_stitch = undefined;
 				scene = new THREE.Scene(); // reset scene
 				scene.add( axisHelper );
 				tailed = false; // didn't "start" string yet
