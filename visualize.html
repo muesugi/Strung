@@ -106,6 +106,7 @@
 			hook_r_inches = hook_diam_mm/(2*mm_per_inch); //converted to inches 
 			var hook_r = inches_to_pixels(hook_r_inches);
 
+			
 			var last_stitch = undefined;
 			var cur_stitch = undefined;
 			var row_max_height = 0;
@@ -354,7 +355,7 @@
 						startx - last_point.x;
 						//NOT allowed to call v_chain before chain
 						//might want to implememt 
-						// a called-sttiches list if it doenst affect
+						// a called-stiches list if it doenst affect
 						// efficiency too much
 
 					console.log("last y", last_point.y);
@@ -413,13 +414,11 @@
 
 				crossover_array = 
 				[new THREE.Vector3(post_startx + direction*2*pix_per_radius, 
-					post_starty + pix_per_radius, (post_startz + zpos)/2),
-				new THREE.Vector3(post_startx - direction*2*pix_per_radius, 
-					post_starty - 1*pix_per_radius, 
-					post_startz + 2*pix_per_radius)];
+					post_starty + pix_per_radius, 
+					(post_startz + zpos)/2)];
 				last_point = new THREE.Vector3(post_startx - direction*2*pix_per_radius, 
-					post_starty - 2*pix_per_radius, 
-					post_startz + 4*pix_per_radius);
+					post_starty - 1*pix_per_radius, 
+					post_startz + 2*pix_per_radius);
 				crossover_array.push(last_point);
 				post_chain_array = post_chain_array.concat(crossover_array);				
 				
@@ -431,10 +430,6 @@
 						//might want to implememt 
 						// a called-sttiches list if it doenst affect
 						// efficiency too much
-
-					console.log("last y", last_point.y);
-					console.log("post_start y", post_starty);
-					console.log("start y",starty);
 					stitch_z_change["v_chain_with_twist"] =
 						last_point.z - post_startz;
 				}
@@ -472,9 +467,66 @@
 				zpos = startz;
 
 				single_array = [
-					new THREE.Vector3(xpos, ypos, zpos),
-					new THREE.Vector3(xpos, ypos -  pix_per_radius, zpos),
-				];
+				new THREE.Vector3(xpos + direction*pix_per_radius,
+				ypos - pix_per_radius, zpos - pix_per_radius),
+				//caps onto the preceeding part of v_chain_with_twist, 
+				// just for visual fluidity/smoothness, but messes with uarn radius
+				//may remove later, but looks much better with this point
+				new THREE.Vector3(xpos, ypos, zpos)];
+
+				edge_loop = [];
+				//axis radii
+				edge_x_r = direction*2*pix_per_radius;
+				edge_y_r = (pix_per_radius + stitch_y_change["v_chain_with_twist"])/2;
+				edge_z_r = pix_per_radius;
+
+				//(~ellipse) center coordinates
+				edge_center_x = xpos - edge_x_r - pix_per_radius;
+				edge_center_y = ypos - edge_y_r - pix_per_radius;
+				edge_center_z = zpos - edge_z_r - pix_per_radius;
+
+
+				t = 0;
+				p = 0; //theta and phi
+				t_end = math.pi/2;//2*math.pi;
+				p_end = t_end/2;
+				t_increment = (t_end-t)/32;
+				p_increment = t_increment/2;
+
+
+				while (t <= t_end && p <= p_end){
+					edge_x = edge_center_x - direction*edge_x_r*math.sin(p)*math.cos(t);
+					edge_y = edge_center_y - edge_y_r*math.sin(p)*math.sin(t);
+					edge_z = edge_center_z + edge_z_r*math.cos(p);
+					edge_loop.push(new THREE.Vector3(edge_x, edge_y, edge_z));
+
+					t = t + t_increment;
+					p = p + p_increment; 
+					//p takes double the time to get to same measure as t
+
+					if (t_end - t < 0.0000000001){ //some floating point error
+						xpos = edge_x;
+						ypos = edge_y;
+						zpos = edge_z;
+						console.log("set poss");
+					}
+				}
+				under_loop = [new THREE.Vector3(
+					xpos + direction*2*pix_per_radius, 
+					ypos - 2*pix_per_radius, 
+					zpos),
+				new THREE.Vector3(
+					xpos + direction*4*pix_per_radius, 
+					ypos - 2*pix_per_radius, 
+					zpos),
+				new THREE.Vector3(
+					xpos + direction*8*pix_per_radius, 
+					ypos - 2*pix_per_radius, 
+					zpos - 2*pix_per_radius)];
+
+				edge_loop = edge_loop.concat(under_loop);
+				single_array = single_array.concat(edge_loop);
+
 
 				single_curve = new THREE.CatmullRomCurve3(single_array);
 				single_geom = new THREE.TubeGeometry(single_curve, 64, pix_per_radius);
@@ -511,7 +563,7 @@
 				"chain": undefined,
 				"v_chain_with_twist": undefined
 			};
-			stitch_y_mag = { //need to define later
+			/*stitch_y_mag = { //need to define later
 				"tail": 0,
 				"slip": 0,
 				"chain": 0,
@@ -523,7 +575,7 @@
 				"slip": 0,
 				"chain": 0,
 				"v_chain": undefined
-			};
+			};*/
 
 			///////////// SCENE ADD ////////////
 
@@ -539,7 +591,7 @@
 				cur_stitch = stitch;
 				geom_call = stitch + "_geometry";
 				stitch_geometry = window[geom_call](x, y, z); //calls correct symbol based on funcname
-				scene.add(new THREE.Line(stitch_geometry, material)); 
+				scene.add(new THREE.Mesh(stitch_geometry, material)); 
 				last_stitch = stitch;
 				//create THREE.Line instead for unfilled model (better able to see individual lines),
 				// THREE.Mesh for a smoother model
@@ -558,11 +610,9 @@
 			draw_to_scene("chain", yarn_material2);
 			draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);
 
-			draw_to_scene("v_chain", yarn_material1);
-			draw_to_scene("v_chain", yarn_material1);
-			draw_to_scene("v_chain", yarn_material1);
-			draw_to_scene("v_chain", yarn_material1);
-			draw_to_scene("single", yarn_material2);
+			draw_to_scene("v_chain_with_twist", yarn_material1);
+			turn();
+			draw_to_scene("single", yarn_material3);
 
 			function render() {
 				var delta = clock.getDelta();
