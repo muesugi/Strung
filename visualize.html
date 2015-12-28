@@ -20,6 +20,19 @@
 				return window.innerHeight||document.documentElement.clientHeight||document.body.clientHeight||0;
 			}	
 			var mm_per_inch = 25.4;
+
+			//from http://stackoverflow.com/questions/11060734/how-to-rotate-a-3d-object-on-axis-three-js:
+			// Rotate an object around an arbitrary axis in object space
+			var rotObjectMatrix;
+			function rotateAroundWorldAxis(object, axis, radians ) {
+			    var rotationMatrix = new THREE.Matrix4();
+
+			    rotationMatrix.makeRotationAxis( axis.normalize(), radians );
+			    rotationMatrix.multiply( object.matrix );                     // pre-multiply
+			    object.matrix = rotationMatrix;
+			    object.rotation.setEulerFromRotationMatrix( object.matrix );
+			}
+
 		</script>
 
 	</head>
@@ -58,9 +71,23 @@
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			document.body.appendChild(renderer.domElement);
 
+			var x_max = window.innerWidth/4; //2 for testing only
+			console.log(x_max);
+			var start_x = x_max; // start_x, start_y, and start_z used for global start
+			var start_y = 000; // startx, starty, startz used for some local start values
+			var start_z = 000;
+
+			var x = start_x; // x, y, z used for global position
+			var y = start_y; //xpos, ypos, zpos used for local positioning
+			var z = start_z; // should be in the same world though, just for differentiation.
+
+			var direction = -1; //always x direction, since y and z should *not* change
+
 			var cameraControls = new THREE.TrackballControls(camera, renderer.domElement);
 			cameraControls.target.set(0, 0, 0);
 			var clock = new THREE.Clock();
+			var axisHelper = new THREE.AxisHelper( 50);
+			scene.add( axisHelper );
 
 			//// Three.js settings for all stitches //////
 			//var yarn_geometry = new THREE.CylinderGeometry(.1, .1, 2, 20);
@@ -92,19 +119,6 @@
 			hook_diam_mm = 11.5; //standard hook sizing is hook diameter in mm
 			hook_r_inches = hook_diam_mm/(2*mm_per_inch); //converted to inches 
 			var hook_r = inches_to_pixels(hook_r_inches);
-
-
-			var x_max = window.innerWidth/4/2; //2 for testing only
-			console.log(x_max);
-			var start_x = x_max; // start_x, start_y, and start_z used for global start
-			var start_y = 000; // startx, starty, startz used for some local start values
-			var start_z = 000;
-
-			var x = start_x; // x, y, z used for global position
-			var y = start_y; //xpos, ypos, zpos used for local positioning
-			var z = start_z; // should be in the same world though, just for differentiation.
-
-			var direction = -1; //always x direction, since y and z should *not* change
 
 			var row_max_height = 0;
 			var tailed = false;
@@ -192,7 +206,7 @@
 				loop_center_z = zpos + loop_r;
 				loop_array = [];
 
-				loop_start_theta = Math.atan(xpos/zpos);
+				loop_start_theta = -math.pi/2;//Math.atan(xpos/zpos);//
 				slip_array.push(
 					new THREE.Vector3(loop_center_x + loop_r*math.cos(loop_start_theta), ypos, 
 						loop_center_z + loop_r*math.sin(loop_start_theta)));
@@ -254,22 +268,23 @@
 
 				chain_array = [new THREE.Vector3(xpos, ypos, zpos),
 					new THREE.Vector3(xpos + direction*3*pix_per_radius, ypos, zpos - 2*pix_per_radius)];
-				xpos = xpos + direction*3*pix_per_radius;// startx + direction*3*pix_per_radius
+				xpos = xpos + direction*3*pix_per_radius;
 				zpos = zpos - pix_per_radius;
 				
 				loop_r = hook_r + pix_per_radius;
-				loop_center_x = xpos - loop_r;
+				loop_center_x = xpos + direction*loop_r;
 				loop_center_z = start_z;
 
-				loop_start_theta = Math.atan(xpos/zpos);
-				chain_array.push(new THREE.Vector3(loop_center_x + loop_r*math.cos(loop_start_theta), ypos, 
-						loop_center_z + loop_r*math.sin(loop_start_theta)));
+				loop_start_theta = -math.pi/2;//Math.atan(xpos/zpos);
+				console.log("start_theta", loop_start_theta*(180/math.pi));
+				chain_array.push(new THREE.Vector3(loop_center_x - direction*loop_r*math.cos(loop_start_theta), ypos, 
+						loop_center_z + loop_r*math.sin(loop_start_theta))); //changed
 
 				loop_theta_d = math.pi;//angular displacement? -math.pi/2;?
 				loop_x_min = loop_center_x; // change throughout loop to get x_change for chain
 
 				for (var t = loop_start_theta; t <= loop_start_theta + loop_theta_d; t = t + (math.pi/16)){ 
-					loop_x = loop_center_x - loop_r*math.cos(t);
+					loop_x = loop_center_x + direction*loop_r*math.cos(t);
 					if (loop_x < loop_x_min){loop_x_min = loop_x;}
 					loop_z = loop_center_z + loop_r*math.sin(t);
 
@@ -311,7 +326,13 @@
 				chain_geom = new THREE.TubeGeometry(chain_curve, 64, pix_per_radius);
 				return chain_geom;
 			}
+			function v_chain_geometry(startx, starty, startz){
+				h_chain_geom = chain_geometry(0, 0, 0);
+				h_chain_geom.rotateZ(3*math.pi/2);
+				h_chain_geom.translate(startx, starty, startz);
 
+				return h_chain_geom;
+			}
 			function turn(){
 				direction = -1*direction;
 				//something to do with new row y?
@@ -357,19 +378,22 @@
 				material = material || yarn_material1; 
 				geom_call = stitch + "_geometry";
 				stitch_geometry = window[geom_call](x, y, z); //calls correct symbol based on funcname
-				scene.add(new THREE.Mesh(stitch_geometry, material)); 
+				scene.add(new THREE.Line(stitch_geometry, material)); 
 				//create THREE.Line instead for unfilled model (better able to see individual lines),
 				// THREE.Mesh for a smoother model
 
 				x = x + direction * stitch_x_change[stitch]; //only x should change for *any* stitch
+				console.log(x, y, z);
 			}
 
 			/// Testing specific function calls.
+			direction = -1 ;
 			draw_to_scene("tail", yarn_material0);
-
 			draw_to_scene("slip", yarn_material1);
-
+			draw_to_scene("chain", yarn_material2);
 			draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);draw_to_scene("chain", yarn_material2);
+
+			draw_to_scene("v_chain", yarn_material3);
 
 			function render() {
 				var delta = clock.getDelta();
@@ -397,6 +421,7 @@
 				direction = -1;
 				row_max_height = 0;
 				scene = new THREE.Scene(); // reset scene
+				scene.add( axisHelper );
 				tailed = false; // didn't "start" string yet
 				selected_yarn = default_yarn;
 
@@ -408,7 +433,6 @@
 			}
 
 			function parse_input(pattern_string){
-				console.log(pattern_string, tailed);
 				clean_pattern = pattern_string.replace(/\s+/g, '');
 				func_call_strings = clean_pattern.split(";");
 				//split separates different functions, slice removes the last (empty) element caused by the last ";"
@@ -420,6 +444,7 @@
 					split_func_call = func_call_strings[f].split("(");
 					// [0]: function name, [1]: function arguments (+ ")" in most cases)
 					func_name = (split_func_call[0]).toLowerCase();
+					console.log(func_name);
 					if ((f == 0) && (tailed == false)){ //set to true in tail_geometry
 						draw_to_scene("tail", selected_yarn); //add material here
 						draw_to_scene("slip", selected_yarn);
