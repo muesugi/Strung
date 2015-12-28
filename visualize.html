@@ -104,6 +104,11 @@
 
 			var direction = -1; //always x direction, since y and z should *not* change
 
+			var row_max_height = 0;
+			var tailed = false;
+			var past_row_widths = [];
+			var cur_row_widths = [];
+
 			// Smooth curve over this many points /// delete
 			//var numPoints = 100;
 
@@ -132,6 +137,7 @@
 				   new THREE.Vector3(xpos + direction*tail_length_pixels, ypos, zpos),
 				]);
 				tail_geom = new THREE.TubeGeometry(tail_curve, 64, pix_per_radius);
+				tailed = true;
 				return tail_geom;
 			}
 
@@ -258,9 +264,11 @@
 						loop_center_z + loop_r*math.sin(loop_start_theta)));
 
 				loop_theta_d = math.pi;//angular displacement? -math.pi/2;?
+				loop_x_min = loop_center_x; // change throughout loop to get x_change for chain
 
 				for (var t = loop_start_theta; t <= loop_start_theta + loop_theta_d; t = t + (math.pi/16)){ 
 					loop_x = loop_center_x - loop_r*math.cos(t);
+					if (loop_x < loop_x_min){loop_x_min = loop_x;}
 					loop_z = loop_center_z + loop_r*math.sin(t);
 
 					chain_array.push(new THREE.Vector3(loop_x, ypos, loop_z));
@@ -291,7 +299,10 @@
 					startz)
 				];
 
-				stitch_x_mag["chain"] = math.abs(reorient_center_x - startx);
+				if (stitch_x_change["chain"] == undefined){
+					stitch_x_change["chain"] = math.abs(reorient_center_x - startx);
+					stitch_x_mag["chain"] = math.abs(loop_x_min - startx);
+				}
 
 				chain_array = chain_array.concat(reorient_array);
 				chain_curve = new THREE.CatmullRomCurve3(chain_array);
@@ -299,15 +310,27 @@
 				return chain_geom;
 			}
 
-			stitch_x_mag = { //magnitudes
+			function turn(){
+				direction = -1*direction;
+				//something to do with new row y?
+			}
+
+			stitch_x_change = { // end_x - start_x, not necessarily the same as total magnitude
 				//all positive values, sign is denoted by the direction variable
 				// in pixels
 				//some will be dynamically reset on func run for geometries
 				"tail": tail_length_pixels,
 				"slip": 2*pix_per_radius,
-				"chain": 0
+				"chain": undefined
 			};
-			stitch_y_mag = {
+			stitch_x_mag = { // think of magnitiude as total width
+				// from leftmost x to rightmost x
+				//all positive values, sign is denoted by the direction variable
+				"tail": tail_length_pixels,
+				"slip": 2*pix_per_radius,
+				"chain": undefined
+			};
+			stitch_y_mag = { //need to define later
 				"tail": 0,
 				"slip": 0,
 				"chain": 0
@@ -335,14 +358,11 @@
 				//create THREE.Line instead for unfilled model (better able to see individual lines),
 				// THREE.Mesh for a smoother model
 
-				x = x + direction * stitch_x_mag[stitch];
-				y = y - stitch_y_mag[stitch];
-				z = z - stitch_z_mag[stitch];
+				x = x + direction * stitch_x_change[stitch]; //only x should change for *any* stitch
 			}
 
 			/// Testing specific function calls.
 			draw_to_scene("tail", yarn_material0);
-			console.log(x, y, z);
 
 			draw_to_scene("slip", yarn_material1);
 
@@ -373,7 +393,8 @@
 				z = start_z;
 				direction = -1;
 				row_max_height = 0;
-				scene = new THREE.Scene();
+				scene = new THREE.Scene(); // reset scene
+				tailed = false; // didn't "start" string yet
 				/*past_row_widths = [];
 				cur_row_widths = [];
 				paper.clear();//redraw every time	*/
@@ -382,6 +403,7 @@
 			}
 
 			function parse_input(pattern_string){
+				console.log(pattern_string, tailed);
 				clean_pattern = pattern_string.replace(/\s+/g, '');
 				func_call_strings = clean_pattern.split(";");
 				//split separates different functions, slice removes the last (empty) element caused by the last ";"
@@ -395,12 +417,12 @@
 					split_func_call = func_call_strings[f].split("(");
 					// [0]: function name, [1]: function arguments (+ ")" in most cases)
 					func_name = (split_func_call[0]).toLowerCase();
-					if (f == 0){
+					if ((f == 0) && (tailed == false)){ //set to true in tail_geometry
 						draw_to_scene("tail"); //add material here
 						draw_to_scene("slip");
 					}
 
-					/*if (func_name == "turn"){ turn(); }
+					if (func_name == "turn"){ turn(); }
 					else if (func_name == "color"){}
 					else if (func_name == "repeat"){
 						to_parse = func_call_strings[f].substring(7)+";"; //"repeat(" has 7 characters
@@ -426,14 +448,14 @@
 					}
 
 
-					else{*/
+					else{
 						//cut off last ")" char
 						n_stitches = Number(split_func_call[1].slice(0, -1));		
 						
 						for (var s = 0; s < n_stitches; s++){
 							draw_to_scene(func_name);
 						}
-					//}	
+					}	
 
 					f++;
 				}
