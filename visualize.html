@@ -67,7 +67,9 @@
 			var yarn_material0 = new THREE.MeshBasicMaterial( {color: "red"});
 			var yarn_material1 = new THREE.MeshBasicMaterial( {color: "black"});
 			var yarn_material2 = new THREE.MeshBasicMaterial( {color: "green"});
-			var yarn_material3 = new THREE.MeshBasicMaterial( {color: "blue"});
+			var yarn_material3 = new THREE.MeshBasicMaterial( {color: "maroon"});
+			var default_yarn = yarn_material3;
+			var selected_yarn = default_yarn;
 
 			//scaling depends on yarn being used
 			//as wpi gets larger, "zoom in" closer--> set yarn radius (in inches) to pixel ratio for simplicity
@@ -333,7 +335,8 @@
 			stitch_y_mag = { //need to define later
 				"tail": 0,
 				"slip": 0,
-				"chain": 0
+				"chain": 0,
+				"single": undefined
 			};
 			stitch_z_mag = {
 				"tail": 0,
@@ -395,6 +398,8 @@
 				row_max_height = 0;
 				scene = new THREE.Scene(); // reset scene
 				tailed = false; // didn't "start" string yet
+				selected_yarn = default_yarn;
+
 				/*past_row_widths = [];
 				cur_row_widths = [];
 				paper.clear();//redraw every time	*/
@@ -408,8 +413,6 @@
 				func_call_strings = clean_pattern.split(";");
 				//split separates different functions, slice removes the last (empty) element caused by the last ";"
 
-				cur_mat = yarn_material1;
-
 				f = 0;
 				while ((f < func_call_strings.length) && (func_call_strings[f] !== "")){
 					//while loop instead of for loop for repeat implementation.
@@ -418,12 +421,14 @@
 					// [0]: function name, [1]: function arguments (+ ")" in most cases)
 					func_name = (split_func_call[0]).toLowerCase();
 					if ((f == 0) && (tailed == false)){ //set to true in tail_geometry
-						draw_to_scene("tail"); //add material here
-						draw_to_scene("slip");
+						draw_to_scene("tail", selected_yarn); //add material here
+						draw_to_scene("slip", selected_yarn);
 					}
 
 					if (func_name == "turn"){ turn(); }
-					else if (func_name == "color"){}
+					else if (func_name == "color"){
+						selected_yarn = new THREE.MeshBasicMaterial( {color: split_func_call[1].slice(0, -1)}); // for string colors only
+					}
 					else if (func_name == "repeat"){
 						to_parse = func_call_strings[f].substring(7)+";"; //"repeat(" has 7 characters
 
@@ -453,7 +458,7 @@
 						n_stitches = Number(split_func_call[1].slice(0, -1));		
 						
 						for (var s = 0; s < n_stitches; s++){
-							draw_to_scene(func_name);
+							draw_to_scene(func_name, selected_yarn);
 						}
 					}	
 
