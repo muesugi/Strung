@@ -106,7 +106,11 @@
 			hook_r_inches = hook_diam_mm/(2*mm_per_inch); //converted to inches 
 			var hook_r = inches_to_pixels(hook_r_inches);
 
-			/// Set up stitch storage ////
+			var prev_stitch = undefined;
+			var cur_stitch = undefined;
+			var nth_row = 0;
+
+			/*/// Set up stitch storage ////
 			var world = [[]]; // an array of arrays containing arrays of length 2 ([funcname, args]) 
 			//ignores all turns and vertical stitches
 			var world_r = 0;
@@ -135,7 +139,7 @@
 			//function next_stitch(){return get_from_world(cur_world_r, cur_world_c + 1);}
 			function above_stitch(){return get_from_world(cur_world_r + 1, cur_world_c);}
 			//function below_stitch(){return get_from_world(cur_world_r - 1, cur_world_c);}
-
+*/
 			var row_max_height = 0;
 			var tailed = false;
 			var past_row_widths = [];
@@ -290,7 +294,7 @@
 				/////for testing only, shouldn't manually set.
 				above = undefined;//above_stitch();
 
-				if (cur_world_r == 0){ //first row
+				if (nth_row == 0){ //first row
 					loop_r = hook_r + pix_per_radius;
 					loop_center_x = xpos + direction*loop_r;
 					loop_center_z = start_z;
@@ -322,10 +326,10 @@
 				}
 
 				//hook in previous loop
-				if (last_stitch() == "slip"){
+				if (prev_stitch == "slip"){
 					hook_xpos = startx + direction*3*pix_per_radius;
 				}
-				else if (cur_stitch() == "v_chain" || cur_stitch() == "v_chain_with_twist"){
+				else if (cur_stitch == "v_chain" || cur_stitch == "v_chain_with_twist"){
 					hook_xpos = startx - direction*2*pix_per_radius;
 				}
 				else{ hook_xpos = startx; }
@@ -488,6 +492,7 @@
 
 			function turn(){
 				direction = -1*direction;
+				nth_row++;
 				//something to do with new row y?
 			}
 
@@ -611,6 +616,8 @@
 				material = material || yarn_material1;//should never be called, but just in case
 				if (stitch == "turn"){turn();}
 				else{
+					prev_stitch = cur_stitch;
+					cur_stitch = stitch;
 					geom_call = stitch + "_geometry";
 					stitch_geometry = window[geom_call](x, y, z); //calls correct symbol based on funcname
 					scene.add(new THREE.Line(stitch_geometry, material)); 
@@ -660,9 +667,12 @@
 				z = start_z;
 				direction = -1;
 				row_max_height = 0;
-				world = [[]]; // start with one row, one column
+				/*world = [[]]; // start with one row, one column
 				world_r = 0;
-				world_c = 0;
+				world_c = 0;*/
+				prev_stitch = undefined;
+				cur_stitch = undefined;
+				nth_row = 0;
 				scene = new THREE.Scene(); // reset scene
 				//scene.add( axisHelper );
 				tailed = false; // didn't "start" string yet
@@ -683,25 +693,20 @@
 					split_func_call = func_call_strings[f].split("(");
 					// [0]: function name, [1]: function arguments (+ ")" in most cases)
 					func_name = (split_func_call[0]).toLowerCase();
-					/*if ((f == 0) && (tailed == false)){ //set to true in tail_geometry
-						//moved tail and slip to draw_world
-					}*/
+					if ((f == 0) && (tailed == false)){ //set to true in tail_geometry
+						draw_to_scene("tail", selected_yarn);
+						draw_to_scene("slip", selected_yarn);
+					}
 
 					if (func_name == "turn"){ //turn();
 						n_verts = Number(split_func_call[1].slice(0, -1));
-						world[world_r].push([]); // add column at world_c index
-						world_c++;
-						for (var v = 0; v < n_verts - 1; v++){ //all but last
-							world[world_r][world_c].push("v_chain");
+						for (var v = 0; v < n_verts - 1; v++){ 
+							draw_to_scene("v_chain", selected_yarn);
 						}
-						world[world_r][world_c].push("v_chain_with_twist");//last turn index
-						world[world_r][world_c].push("turn");//actually change direction
-						world_r++;
-						//make empty world_r exist within world
-						world.push([]);
-						world_c = -1;
+						draw_to_scene("v_chain_with_twist", selected_yarn);
+						turn();
 					}
-					else if (func_name == "color"){ //come back to this
+					else if (func_name == "color"){ 
 						selected_yarn = new THREE.MeshBasicMaterial( {color: split_func_call[1].slice(0, -1)}); // for string colors only
 					}
 					else if (func_name == "repeat"){
@@ -731,42 +736,16 @@
 					else{
 						//cut off last ")" char
 						n_stitches = Number(split_func_call[1].slice(0, -1));
-						for (var s = 0; s < n_stitches; s++){
-							world[world_r].push([func_name]); // at column world_c
-							//world_c++;
-						}
-						world_c = world_c + n_stitches - 1;
-						/*
+						
 						for (var s = 0; s < n_stitches; s++){
 							draw_to_scene(func_name, selected_yarn);
-						}*/
+						}
 					}	
 
 					f++;
 				}
-				/*console.log("questions about world");
-				console.log("does world_r == world.length - 1?",  world_r == world.length -1);
-				console.log("does world_c == world[world_r].length - 1 (when it should)?",  world_c == world[world_r].length - 1);*/
-				draw_world();
 			}
-			function draw_world(){
-				draw_to_scene("tail", selected_yarn); //add material here
-				draw_to_scene("slip", selected_yarn);
-				//assumes there are world_r + 1 rows and world_c + 1 cols
-				for (var r = 0; r < world_r + 1; r++){
-					for (var c = 0; c < world[r].length; c++){
-						cur_col = world[r][c];
-						for (var fun = 0; fun < cur_col.length; fun++){
-							cur_world_r = r;
-							cur_world_c = c;
-							draw_to_scene(cur_col[fun], selected_yarn);
-						}
-					}	
-				}
-				//check:
-				//console.log("world_r and cur_world_r", world_r >= cur_world_r);
-				//console.log("world_c and cur_world_c", world_c >= cur_world_c);
-			}
+			
 			$( window ).resize(function() {
 				$("#textarea").width('100%');
 				header_spacing();
