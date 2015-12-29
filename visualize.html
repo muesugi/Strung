@@ -179,7 +179,6 @@
 				xpos = startx;
 				ypos = starty;
 				zpos = startz;
-				console.log(xpos, ypos, zpos);
 
 				yzloop_end_theta = (2*math.pi);
 
@@ -277,42 +276,49 @@
 				return slip_geom;
 			}
 
-			function ch_array(startx, starty, startz){ //just a helper, not intended to be
+			function ch_array(startx, starty, startz){ 
+				//just a helper, not intended to be
 				//publically accessible
 				xpos = startx;
 				ypos = starty;
 				zpos = startz;
 
-				if (above_stitch() == undefined){console.log("above is undefined");}
 				chain_array = [new THREE.Vector3(xpos, ypos, zpos),
 					new THREE.Vector3(xpos + direction*3*pix_per_radius, ypos, zpos - 2*pix_per_radius)];
 				xpos = xpos + direction*3*pix_per_radius;
 				zpos = zpos - pix_per_radius;
-				
-				loop_r = hook_r + pix_per_radius;
-				loop_center_x = xpos + direction*loop_r;
-				loop_center_z = start_z;
+				/////for testing only, shouldn't manually set.
+				above = undefined;//above_stitch();
 
-				loop_start_theta = -math.pi/2;//Math.atan(xpos/zpos);
-				chain_array.push(new THREE.Vector3(loop_center_x - direction*loop_r*math.cos(loop_start_theta), ypos, 
-						loop_center_z + loop_r*math.sin(loop_start_theta))); //changed
+				if (cur_world_r == 0){ //first row
+					loop_r = hook_r + pix_per_radius;
+					loop_center_x = xpos + direction*loop_r;
+					loop_center_z = start_z;
 
-				loop_theta_d = math.pi;//angular displacement? -math.pi/2;?
-				loop_x_min = loop_center_x; // change throughout loop to get x_change for chain
+					loop_start_theta = -math.pi/2;//Math.atan(xpos/zpos);
+					chain_array.push(new THREE.Vector3(loop_center_x - direction*loop_r*math.cos(loop_start_theta), ypos, 
+							loop_center_z + loop_r*math.sin(loop_start_theta))); //changed
 
-				for (var t = loop_start_theta; t <= loop_start_theta + loop_theta_d; t = t + (math.pi/16)){ 
-					loop_x = loop_center_x + direction*loop_r*math.cos(t);
-					loop_y = ypos; //- 2*t*Math.abs(loop_x/xpos);// - (2*pix_per_radius);""
-					if (loop_x < loop_x_min){loop_x_min = loop_x;}
-					loop_z = loop_center_z + loop_r*math.sin(t);
+					loop_theta_d = math.pi;//angular displacement? -math.pi/2;?
+					loop_x_min = loop_center_x; // change throughout loop to get x_change for chain
 
-					chain_array.push(new THREE.Vector3(loop_x, loop_y, loop_z));
+					for (var t = loop_start_theta; t <= loop_start_theta + loop_theta_d; t = t + (math.pi/16)){ 
+						loop_x = loop_center_x + direction*loop_r*math.cos(t);
+						loop_y = ypos; //- 2*t*Math.abs(loop_x/xpos);// - (2*pix_per_radius);""
+						if (loop_x < loop_x_min){loop_x_min = loop_x;}
+						loop_z = loop_center_z + loop_r*math.sin(t);
 
-					if ((t + (math.pi/16)) > loop_start_theta + loop_theta_d){// last iteration
-						xpos = loop_x;
-						ypos = loop_y;
-						zpos = loop_z;
+						chain_array.push(new THREE.Vector3(loop_x, loop_y, loop_z));
+
+						if ((t + (math.pi/16)) > loop_start_theta + loop_theta_d){// last iteration
+							xpos = loop_x;
+							ypos = loop_y;
+							zpos = loop_z;
+						}
 					}
+				}
+				else{
+
 				}
 
 				//hook in previous loop
@@ -658,7 +664,7 @@
 				world_r = 0;
 				world_c = 0;
 				scene = new THREE.Scene(); // reset scene
-				scene.add( axisHelper );
+				//scene.add( axisHelper );
 				tailed = false; // didn't "start" string yet
 				selected_yarn = default_yarn;
 
@@ -738,7 +744,6 @@
 
 					f++;
 				}
-				console.log(world);
 				/*console.log("questions about world");
 				console.log("does world_r == world.length - 1?",  world_r == world.length -1);
 				console.log("does world_c == world[world_r].length - 1 (when it should)?",  world_c == world[world_r].length - 1);*/
@@ -748,7 +753,6 @@
 				draw_to_scene("tail", selected_yarn); //add material here
 				draw_to_scene("slip", selected_yarn);
 				//assumes there are world_r + 1 rows and world_c + 1 cols
-				console.log(world_r, world_c);
 				for (var r = 0; r < world_r + 1; r++){
 					for (var c = 0; c < world[r].length; c++){
 						cur_col = world[r][c];
@@ -760,8 +764,8 @@
 					}	
 				}
 				//check:
-				console.log("world_r and cur_world_r", world_r >= cur_world_r);
-				console.log("world_c and cur_world_c", world_c >= cur_world_c);
+				//console.log("world_r and cur_world_r", world_r >= cur_world_r);
+				//console.log("world_c and cur_world_c", world_c >= cur_world_c);
 			}
 			$( window ).resize(function() {
 				$("#textarea").width('100%');
