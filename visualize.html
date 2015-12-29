@@ -106,12 +106,36 @@
 			hook_r_inches = hook_diam_mm/(2*mm_per_inch); //converted to inches 
 			var hook_r = inches_to_pixels(hook_r_inches);
 
+			/// Set up stitch storage ////
 			var world = [[]]; // an array of arrays containing arrays of length 2 ([funcname, args]) 
 			//ignores all turns and vertical stitches
 			var world_r = 0;
 			var world_c = 0;
-			var last_stitch = undefined;
-			var cur_stitch = undefined;
+			var cur_world_r = 0; // index within world of the stitch being drawn in a given moment
+			// after draw_world, cur_world_r should evaluate to world_r
+			// and cur_world_c should evaluate to world_c, given that
+			// the #rows and columns are the same throughout the array (not necessarily the case)
+			var cur_world_c = 0;
+			//
+			//all depend on accurate cur_world_r and cur_world_l vals
+			function get_from_world(r, c, i){ 
+			//produces undefined vals instead of raising errors
+				i = i || 0;
+				if ((r >= 0 && r <= world_r) && (c >= 0 && c <= world_c)){ // r and c are valid
+					slot_from_world = world[r][c];
+					if ((slot_from_world != undefined) && ((i >= 0) && (slot_from_world.length > i))){
+						//a bit inelegant but assumed short-circuiting did not seem to work correctly
+						return world[r][c][i];
+					}
+				}
+				return undefined;
+			}
+			function last_stitch(){return get_from_world(cur_world_r, cur_world_c - 1);}
+			function cur_stitch(){return get_from_world(cur_world_r, cur_world_c);}
+			//function next_stitch(){return get_from_world(cur_world_r, cur_world_c + 1);}
+			function above_stitch(){return get_from_world(cur_world_r + 1, cur_world_c);}
+			//function below_stitch(){return get_from_world(cur_world_r - 1, cur_world_c);}
+
 			var row_max_height = 0;
 			var tailed = false;
 			var past_row_widths = [];
@@ -259,6 +283,7 @@
 				ypos = starty;
 				zpos = startz;
 
+				if (above_stitch() == undefined){console.log("above is undefined");}
 				chain_array = [new THREE.Vector3(xpos, ypos, zpos),
 					new THREE.Vector3(xpos + direction*3*pix_per_radius, ypos, zpos - 2*pix_per_radius)];
 				xpos = xpos + direction*3*pix_per_radius;
@@ -291,10 +316,10 @@
 				}
 
 				//hook in previous loop
-				if (last_stitch == "slip"){
+				if (last_stitch() == "slip"){
 					hook_xpos = startx + direction*3*pix_per_radius;
 				}
-				else if (cur_stitch == "v_chain" || cur_stitch == "v_chain_with_twist"){
+				else if (cur_stitch() == "v_chain" || cur_stitch() == "v_chain_with_twist"){
 					hook_xpos = startx - direction*2*pix_per_radius;
 				}
 				else{ hook_xpos = startx; }
@@ -524,7 +549,7 @@
 
 				edge_loop = edge_loop.concat(under_loop);
 				single_array = single_array.concat(edge_loop);
-
+				//if 
 
 				single_curve = new THREE.CatmullRomCurve3(single_array);
 				single_geom = new THREE.TubeGeometry(single_curve, 64, pix_per_radius);
@@ -576,29 +601,21 @@
 			};*/
 
 			///////////// SCENE ADD ////////////
-
-			//depreciated, delete at end
-			function draw_scene_geometries(scene_geometries, material){ 
-				for(var sg = 0; sg < scene_geometries.length; sg++){
-					scene.add(new THREE.Line(scene_geometries[sg], material));
-				}
-			} 
-
 			function draw_to_scene(stitch, material){
 				material = material || yarn_material1;//should never be called, but just in case
-				cur_stitch = stitch;
-				console.log("drawing...", stitch);
-				geom_call = stitch + "_geometry";
-				stitch_geometry = window[geom_call](x, y, z); //calls correct symbol based on funcname
-				scene.add(new THREE.Mesh(stitch_geometry, material)); 
-				last_stitch = stitch;
-				//create THREE.Line instead for unfilled model (better able to see individual lines),
-				// THREE.Mesh for a smoother model
+				if (stitch == "turn"){turn();}
+				else{
+					geom_call = stitch + "_geometry";
+					stitch_geometry = window[geom_call](x, y, z); //calls correct symbol based on funcname
+					scene.add(new THREE.Line(stitch_geometry, material)); 
+					//create THREE.Line instead for unfilled model (better able to see individual lines),
+					// THREE.Mesh for a smoother model
 
-				x = x + direction * stitch_x_change[stitch]; //only x should change for most stitches,
-				// especially all that are repeated
-				y = y + stitch_y_change[stitch]; 
-				z = z + stitch_z_change[stitch]; 
+					x = x + direction * stitch_x_change[stitch]; //only x should change for most stitches,
+					// especially all that are repeated
+					y = y + stitch_y_change[stitch]; 
+					z = z + stitch_z_change[stitch]; 
+				}
 			}
 
 			/// Testing specific function calls. Set default/placeholder here
@@ -637,8 +654,6 @@
 				z = start_z;
 				direction = -1;
 				row_max_height = 0;
-				last_stitch = undefined;
-				cur_stitch = undefined;
 				world = [[]]; // start with one row, one column
 				world_r = 0;
 				world_c = 0;
@@ -674,7 +689,7 @@
 							world[world_r][world_c].push("v_chain");
 						}
 						world[world_r][world_c].push("v_chain_with_twist");//last turn index
-
+						world[world_r][world_c].push("turn");//actually change direction
 						world_r++;
 						//make empty world_r exist within world
 						world.push([]);
@@ -738,10 +753,15 @@
 					for (var c = 0; c < world[r].length; c++){
 						cur_col = world[r][c];
 						for (var fun = 0; fun < cur_col.length; fun++){
+							cur_world_r = r;
+							cur_world_c = c;
 							draw_to_scene(cur_col[fun], selected_yarn);
 						}
 					}	
 				}
+				//check:
+				console.log("world_r and cur_world_r", world_r >= cur_world_r);
+				console.log("world_c and cur_world_c", world_c >= cur_world_c);
 			}
 			$( window ).resize(function() {
 				$("#textarea").width('100%');
