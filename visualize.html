@@ -106,7 +106,10 @@
 			hook_r_inches = hook_diam_mm/(2*mm_per_inch); //converted to inches 
 			var hook_r = inches_to_pixels(hook_r_inches);
 
-			
+			var world = [[]]; // an array of arrays containing arrays of length 2 ([funcname, args]) 
+			//ignores all turns and vertical stitches
+			var world_r = 0;
+			var world_c = 0;
 			var last_stitch = undefined;
 			var cur_stitch = undefined;
 			var row_max_height = 0;
@@ -357,10 +360,6 @@
 						//might want to implememt 
 						// a called-stiches list if it doenst affect
 						// efficiency too much
-
-					console.log("last y", last_point.y);
-					console.log("post_start y", starty);
-					console.log("start y",starty);
 					stitch_z_change["v_chain"] =
 						last_point.z - startz;
 				}
@@ -508,7 +507,6 @@
 						xpos = edge_x;
 						ypos = edge_y;
 						zpos = edge_z;
-						console.log("set poss");
 					}
 				}
 				under_loop = [new THREE.Vector3(
@@ -589,6 +587,7 @@
 			function draw_to_scene(stitch, material){
 				material = material || yarn_material1;//should never be called, but just in case
 				cur_stitch = stitch;
+				console.log("drawing...", stitch);
 				geom_call = stitch + "_geometry";
 				stitch_geometry = window[geom_call](x, y, z); //calls correct symbol based on funcname
 				scene.add(new THREE.Mesh(stitch_geometry, material)); 
@@ -600,7 +599,6 @@
 				// especially all that are repeated
 				y = y + stitch_y_change[stitch]; 
 				z = z + stitch_z_change[stitch]; 
-				console.log(x, y, z);
 			}
 
 			/// Testing specific function calls. Set default/placeholder here
@@ -641,14 +639,13 @@
 				row_max_height = 0;
 				last_stitch = undefined;
 				cur_stitch = undefined;
+				world = [[]]; // start with one row, one column
+				world_r = 0;
+				world_c = 0;
 				scene = new THREE.Scene(); // reset scene
 				scene.add( axisHelper );
 				tailed = false; // didn't "start" string yet
 				selected_yarn = default_yarn;
-
-				/*past_row_widths = [];
-				cur_row_widths = [];
-				paper.clear();//redraw every time	*/
 
 		    	parse_input($("#textarea").val()); //style choice to pass the string. 
 			}
@@ -665,13 +662,25 @@
 					split_func_call = func_call_strings[f].split("(");
 					// [0]: function name, [1]: function arguments (+ ")" in most cases)
 					func_name = (split_func_call[0]).toLowerCase();
-					if ((f == 0) && (tailed == false)){ //set to true in tail_geometry
-						draw_to_scene("tail", selected_yarn); //add material here
-						draw_to_scene("slip", selected_yarn);
-					}
+					/*if ((f == 0) && (tailed == false)){ //set to true in tail_geometry
+						//moved tail and slip to draw_world
+					}*/
 
-					if (func_name == "turn"){ turn(); }
-					else if (func_name == "color"){
+					if (func_name == "turn"){ //turn();
+						n_verts = Number(split_func_call[1].slice(0, -1));
+						world[world_r].push([]); // add column at world_c index
+						world_c++;
+						for (var v = 0; v < n_verts - 1; v++){ //all but last
+							world[world_r][world_c].push("v_chain");
+						}
+						world[world_r][world_c].push("v_chain_with_twist");//last turn index
+
+						world_r++;
+						//make empty world_r exist within world
+						world.push([]);
+						world_c = -1;
+					}
+					else if (func_name == "color"){ //come back to this
 						selected_yarn = new THREE.MeshBasicMaterial( {color: split_func_call[1].slice(0, -1)}); // for string colors only
 					}
 					else if (func_name == "repeat"){
@@ -700,16 +709,45 @@
 
 					else{
 						//cut off last ")" char
-						n_stitches = Number(split_func_call[1].slice(0, -1));		
-						
+						n_stitches = Number(split_func_call[1].slice(0, -1));
+						for (var s = 0; s < n_stitches; s++){
+							world[world_r].push([func_name]); // at column world_c
+							//world_c++;
+						}
+						world_c = world_c + n_stitches - 1;
+						/*
 						for (var s = 0; s < n_stitches; s++){
 							draw_to_scene(func_name, selected_yarn);
-						}
+						}*/
 					}	
 
 					f++;
 				}
+				console.log(world);
+				/*console.log("questions about world");
+				console.log("does world_r == world.length - 1?",  world_r == world.length -1);
+				console.log("does world_c == world[world_r].length - 1 (when it should)?",  world_c == world[world_r].length - 1);*/
+				draw_world();
 			}
+			function draw_world(){
+				draw_to_scene("tail", selected_yarn); //add material here
+				draw_to_scene("slip", selected_yarn);
+				//assumes there are world_r + 1 rows and world_c + 1 cols
+				console.log(world_r, world_c);
+				for (var r = 0; r < world_r + 1; r++){
+					for (var c = 0; c < world[r].length; c++){
+						cur_col = world[r][c];
+						for (var fun = 0; fun < cur_col.length; fun++){
+							draw_to_scene(cur_col[fun], selected_yarn);
+						}
+					}	
+				}
+			}
+			$( window ).resize(function() {
+				$("#textarea").width('100%');
+				header_spacing();
+				default_and_parse();
+			});
 
 		</script>
 		
