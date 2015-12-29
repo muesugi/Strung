@@ -108,7 +108,7 @@
 
 			var prev_stitch = undefined;
 			var cur_stitch = undefined;
-			var nth_row = 0;
+			var one_row = true;
 
 			/*/// Set up stitch storage ////
 			var world = [[]]; // an array of arrays containing arrays of length 2 ([funcname, args]) 
@@ -286,43 +286,42 @@
 				xpos = startx;
 				ypos = starty;
 				zpos = startz;
+				chain_array = [new THREE.Vector3(xpos, ypos, zpos)]
 
-				chain_array = [new THREE.Vector3(xpos, ypos, zpos),
-					new THREE.Vector3(xpos + direction*3*pix_per_radius, ypos, zpos - 2*pix_per_radius)];
 				xpos = xpos + direction*3*pix_per_radius;
 				zpos = zpos - pix_per_radius;
-				/////for testing only, shouldn't manually set.
-				above = undefined;//above_stitch();
 
-				if (nth_row == 0){ //first row
-					loop_r = hook_r + pix_per_radius;
-					loop_center_x = xpos + direction*loop_r;
-					loop_center_z = start_z;
-
-					loop_start_theta = -math.pi/2;//Math.atan(xpos/zpos);
-					chain_array.push(new THREE.Vector3(loop_center_x - direction*loop_r*math.cos(loop_start_theta), ypos, 
-							loop_center_z + loop_r*math.sin(loop_start_theta))); //changed
-
-					loop_theta_d = math.pi;//angular displacement? -math.pi/2;?
-					loop_x_min = loop_center_x; // change throughout loop to get x_change for chain
-
-					for (var t = loop_start_theta; t <= loop_start_theta + loop_theta_d; t = t + (math.pi/16)){ 
-						loop_x = loop_center_x + direction*loop_r*math.cos(t);
-						loop_y = ypos; //- 2*t*Math.abs(loop_x/xpos);// - (2*pix_per_radius);""
-						if (loop_x < loop_x_min){loop_x_min = loop_x;}
-						loop_z = loop_center_z + loop_r*math.sin(t);
-
-						chain_array.push(new THREE.Vector3(loop_x, loop_y, loop_z));
-
-						if ((t + (math.pi/16)) > loop_start_theta + loop_theta_d){// last iteration
-							xpos = loop_x;
-							ypos = loop_y;
-							zpos = loop_z;
-						}
-					}
+				chain_array.push(new THREE.Vector3(xpos, ypos, zpos));
+				
+				one_row = false;
+				if (one_row == true){ //first and only row
+					loop_z_r = hook_r + pix_per_radius;
 				}
 				else{
+					loop_z_r = pix_per_radius;
+				}
+				loop_x_r = hook_r + pix_per_radius;
+				loop_center_x = xpos + direction*loop_r;
+				loop_center_z = start_z;
 
+				loop_start_theta = -math.pi/2;//Math.atan(xpos/zpos);
+
+				loop_theta_d = math.pi;//angular displacement? -math.pi/2;?
+				loop_x_min = loop_center_x; // change throughout loop to get x_change for chain, doesn't affect visual rendering
+
+				for (var t = loop_start_theta; t <= loop_start_theta + loop_theta_d; t = t + (math.pi/16)){ 
+					loop_x = loop_center_x + direction*loop_x_r*math.cos(t);
+					loop_y = ypos; //- 2*t*Math.abs(loop_x/xpos);// - (2*pix_per_radius);""
+					if (loop_x < loop_x_min){loop_x_min = loop_x;}
+					loop_z = loop_center_z + loop_z_r*math.sin(t);
+
+					chain_array.push(new THREE.Vector3(loop_x, loop_y, loop_z));
+
+					if ((t + (math.pi/16)) > loop_start_theta + loop_theta_d){// last iteration
+						xpos = loop_x;
+						ypos = loop_y;
+						zpos = loop_z;
+					}
 				}
 
 				//hook in previous loop
@@ -492,7 +491,6 @@
 
 			function turn(){
 				direction = -1*direction;
-				nth_row++;
 				//something to do with new row y?
 			}
 
@@ -672,7 +670,7 @@
 				world_c = 0;*/
 				prev_stitch = undefined;
 				cur_stitch = undefined;
-				nth_row = 0;
+				one_row = true; //first row only
 				scene = new THREE.Scene(); // reset scene
 				//scene.add( axisHelper );
 				tailed = false; // didn't "start" string yet
@@ -683,6 +681,9 @@
 
 			function parse_input(pattern_string){
 				clean_pattern = pattern_string.replace(/\s+/g, '');
+				if (pattern_string.indexOf("turn") == -1){one_row = true;}
+				else{one_row = false;}
+
 				func_call_strings = clean_pattern.split(";");
 				//split separates different functions, slice removes the last (empty) element caused by the last ";"
 
