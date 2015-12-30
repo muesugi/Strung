@@ -137,8 +137,13 @@
 			function last_stitch(){return get_from_world(cur_world_r, cur_world_c - 1);}
 			function cur_stitch(){return get_from_world(cur_world_r, cur_world_c);}
 			//function next_stitch(){return get_from_world(cur_world_r, cur_world_c + 1);}
-			function above_stitch(){return get_from_world(cur_world_r + 1, 
-				(world_c + 2) - cur_world_c);}//change this if there are parts of the piece with diff # cols?
+			function above_stitch(){
+				r = cur_world_r + 1;
+				if ((r >= 0 && r <= world_r)){
+					//get correct above column
+					return get_from_world(r, world[r - 1].length - 2 - cur_world_c);
+				}
+			}
 			//function below_stitch(){return get_from_world(cur_world_r - 1, cur_world_c);}
 
 			var row_max_height = 0;
@@ -636,7 +641,6 @@
 				}
 				xpos = loop_center_x - direction*loop_x_r*math.cos(loop_start_theta + loop_theta_d);
 				zpos = loop_center_z + loop_r*math.sin(loop_start_theta + loop_theta_d);
-				console.log("direct", direction);
 				post_single_array.push( // finish loop
 					new THREE.Vector3(xpos, ypos, zpos));	
 				post_single_array.push( // bring coords back to edge of the previous loop stitch
@@ -904,6 +908,7 @@
 
 					f++;
 				}
+				console.log(world);
 				draw_world();
 			}
 			function draw_world(){
