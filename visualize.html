@@ -24,7 +24,7 @@
 		<a class="site_nav" id="chartify" href="chartify.html">Chartify</a> <!--79.8438px-->
 	</div>
 
-	<select id="wpi-select">
+	<select class="selects" id="wpi-select">
 		<option value="14">14 wpi (Fingering)</option>
 		<option value="12">12 wpi (Sport)</option>
 		<option value="11">11 wpi (DK)</option>
@@ -34,7 +34,7 @@
 		<option value="5" selected="selected">5 wpi (Super Bulky)</option>
 		<!--<option>Other<input></input></option>-->
 	</select>
-	<select id="hook-select">
+	<select class="selects" id="hook-select">
 		<option value="2.25">2.25 mm (B-1)</option>
 		<option value="2.75">2.75 mm (C-2)</option>
 		<option value="3.25">3.25 mm (D-3)</option>
@@ -825,9 +825,11 @@
 			$( window ).resize(function() {
 				$("#textarea").width('100%');
 				header_spacing();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild(renderer.domElement);
 				default_and_parse();
 			});
-			
+
 			$("#wpi-select").change(function(){
 				//lots of vars depend on wpi, need to redo their calculations
 				yarn_wpi = Number(this.value);
