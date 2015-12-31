@@ -35,7 +35,7 @@
 		<a class="site_nav" id="chartify" href="chartify.html">Chartify</a> <!--79.8438px-->
 	</div>
 
-	<textarea id="textarea" spellcheck=false placeholder="chain(15); turn(); single(10); turn(); double(10); turn();"></textarea>
+	<textarea id="textarea" spellcheck=false placeholder="chain(15); turn(); single(10); turn(); double(10); turn();">chain(10); turn(); single(1)</textarea>
 	
 		<script type="text/javascript">
 			header_spacing();
@@ -66,6 +66,11 @@
 			var x = start_x; // x, y, z used for global position
 			var y = start_y; //xpos, ypos, zpos used for local positioning
 			var z = start_z; // should be in the same world though, just for differentiation.
+			function set_global_coords(xpos, ypos, zpos){
+				x = xpos;
+				y = ypos;
+				z = zpos;
+			}
 
 			var direction = -1; //always x direction, since y and z should *not* change
 
@@ -125,7 +130,7 @@
 			function get_from_world(r, c, i){ 
 			//produces undefined vals instead of raising errors
 				i = i || 0;
-				if ((r >= 0 && r <= world_r) && (c >= 0 && c <= world_c)){ // r and c are valid
+				if ((r >= 0 && r <= world_r) && (c >= 0 && (c <= world_c || world_c == -1))){ // r and c are valid
 					slot_from_world = world[r][c];
 					if ((slot_from_world != undefined) && ((i >= 0) && (slot_from_world.length > i))){
 						//a bit inelegant but assumed short-circuiting did not seem to work correctly
@@ -134,7 +139,22 @@
 				}
 				return undefined;
 			}
-			function last_stitch(){return get_from_world(cur_world_r, cur_world_c - 1);}
+			function last_stitch(r, c, i){
+				r = r || cur_world_r;
+				c = c || cur_world_c;
+				i = i || 0;
+				//get last from prev row if slot is the first in a row
+				if (c == 0){
+					r = r - 1;
+					if ((r >= 0 && r <= world_r)){
+						//get correct above column
+						new_c = world[r].length - 1;
+						return get_from_world(r, new_c, world[r][new_c].length - 1);
+					}
+				}
+				else {return get_from_world(r, c - 1, i);}
+				
+			}
 			function cur_stitch(){return get_from_world(cur_world_r, cur_world_c);}
 			//function next_stitch(){return get_from_world(cur_world_r, cur_world_c + 1);}
 			function above_stitch(){
@@ -180,6 +200,7 @@
 				]);
 				tail_geom = new THREE.TubeGeometry(tail_curve, 64, pix_per_radius);
 				tailed = true;
+				//set_global_coords(xpos + direction*tail_length_pixels, ypos, zpos);
 				return tail_geom;
 			}
 
@@ -280,6 +301,7 @@
 				];
 
 				slip_array = slip_array.concat(reorient_array);
+				//set_global_coords(startx +direction*2*pix_per_radius, starty, startz);
 
 				slip_curve = new THREE.CatmullRomCurve3(slip_array);
 				slip_geom = new THREE.TubeGeometry(slip_curve, 64, pix_per_radius);
@@ -365,7 +387,7 @@
 					starty,
 					startz)
 				];
-
+				//set_global_coords(reorient_center_x, starty, startz);
 				if (stitch_x_change["chain"] == undefined){
 					stitch_x_change["chain"] = math.abs(reorient_center_x - startx);
 					stitch_x_mag["chain"] = math.abs(loop_x_min - startx);
@@ -391,6 +413,7 @@
 				// x -> y
 				// y -> x
 				// z doesn't change
+				//set_global_coords(last_point.y, startx - last_point.x + starty, last_point.z);
 				if (stitch_x_change["v_chain"] == undefined){
 					stitch_x_change["v_chain"] = (last_point.y - starty);
 					stitch_y_change["v_chain"] =
@@ -472,6 +495,7 @@
 						last_point.z - post_startz;
 				}
 				//
+				//set_global_coords(last_point.x - post_startx + startx, stitch_x_change["chain"] + post_starty + starty, last_point.z- post_startz + startz);
 				//establish both geometries
 				post_chain_curve = new THREE.CatmullRomCurve3(post_chain_array);
 				post_chain_geom = new THREE.TubeGeometry(post_chain_curve, 64, pix_per_radius);
@@ -503,73 +527,99 @@
 				xpos = startx;
 				ypos = starty;
 				zpos = startz;
+				single_array = [];
+				console.log("last stitch", last_stitch());
 
-				single_array = [
-				new THREE.Vector3(xpos + direction*pix_per_radius,
-				ypos - pix_per_radius, zpos - pix_per_radius),
-				//caps onto the preceeding part of v_chain_with_twist, 
-				// just for visual fluidity/smoothness, but messes with uarn radius
-				//may remove later, but looks much better with this point
-				new THREE.Vector3(xpos, ypos, zpos)];
+				if ((last_stitch() == undefined) || (last_stitch() == "turn")){ // for now, may make if last is turn
+					single_array = [
+					new THREE.Vector3(xpos + direction*pix_per_radius,
+					ypos - pix_per_radius, zpos - pix_per_radius),
+					//caps onto the preceeding part of v_chain_with_twist, 
+					// just for visual fluidity/smoothness, but messes with uarn radius
+					//may remove later, but looks much better with this point
+					new THREE.Vector3(xpos, ypos, zpos)];
 
-				edge_loop = []; // at one of the edges of the piece
-				//axis radii
-				edge_x_r = direction*2*pix_per_radius;
-				edge_y_r = (pix_per_radius + stitch_y_change["v_chain_with_twist"])/2;
-				edge_z_r = pix_per_radius;
+					edge_loop = []; // at one of the edges of the piece
+					//** only drawn if its the next stitch directly after a v_chain_with_twist
+					//axis radii
+					edge_x_r = direction*2*pix_per_radius;
+					edge_y_r = (pix_per_radius + stitch_y_change["v_chain_with_twist"])/2;
+					edge_z_r = pix_per_radius;
 
-				//(~ellipse) center coordinates
-				edge_center_x = xpos - edge_x_r - pix_per_radius;
-				edge_center_y = ypos - edge_y_r - pix_per_radius;
-				edge_center_z = zpos - edge_z_r - pix_per_radius;
+					//(~ellipse) center coordinates
+					edge_center_x = xpos - edge_x_r - pix_per_radius;
+					edge_center_y = ypos - edge_y_r - pix_per_radius;
+					edge_center_z = zpos - edge_z_r - pix_per_radius;
 
 
-				t = 0;
-				p = 0; //theta and phi
-				t_end = math.pi/2;//2*math.pi;
-				p_end = t_end/2;
-				t_increment = (t_end-t)/32;
-				p_increment = t_increment/2;
+					t = 0;
+					p = 0; //theta and phi
+					t_end = math.pi/2;//2*math.pi;
+					p_end = t_end/2;
+					t_increment = (t_end-t)/32;
+					p_increment = t_increment/2;
 
-				while (t <= t_end && p <= p_end){
-					edge_x = edge_center_x - direction*edge_x_r*math.sin(p)*math.cos(t);
-					edge_y = edge_center_y - edge_y_r*math.sin(p)*math.sin(t);
-					edge_z = edge_center_z + edge_z_r*math.cos(p);
-					edge_loop.push(new THREE.Vector3(edge_x, edge_y, edge_z));
+					while (t <= t_end && p <= p_end){
+						edge_x = edge_center_x - direction*edge_x_r*math.sin(p)*math.cos(t);
+						edge_y = edge_center_y - edge_y_r*math.sin(p)*math.sin(t);
+						edge_z = edge_center_z + edge_z_r*math.cos(p);
+						edge_loop.push(new THREE.Vector3(edge_x, edge_y, edge_z));
 
-					t = t + t_increment;
-					p = p + p_increment; 
-					//p takes double the time to get to same measure as t
+						t = t + t_increment;
+						p = p + p_increment; 
+						//p takes double the time to get to same measure as t
 
-					if (t_end - t < 0.0000000001){ //some floating point error
-						xpos = edge_x;
-						ypos = edge_y;
-						zpos = edge_z;
+						if (t_end - t < 0.0000000001){ //some floating point error
+							xpos = edge_x;
+							ypos = edge_y;
+							zpos = edge_z;
+						}
 					}
+					single_array = single_array.concat(edge_loop);
+
+				
+					under_startx = xpos + direction*2*pix_per_radius;
+					under_starty = ypos - 2*pix_per_radius;
+					under_startz = zpos;
+
+					under_loop = [
+						new THREE.Vector3(under_startx, under_starty, under_startz),
+						new THREE.Vector3(
+							under_startx + direction*2*pix_per_radius, 
+							under_starty, 
+							under_startz),
+						new THREE.Vector3(
+							under_startx + direction*3*pix_per_radius, 
+							under_starty + pix_per_radius, 
+							under_startz),
+						new THREE.Vector3(
+							under_startx + direction*5*pix_per_radius, 
+							under_starty + pix_per_radius, 
+							under_startz - 3*pix_per_radius)];
+
+					xpos = under_startx + direction*5*pix_per_radius;
+					ypos = under_starty + pix_per_radius;
+					zpos = under_startz - 3*pix_per_radius;				
 				}
-				under_loop = [new THREE.Vector3(
-					xpos + direction*2*pix_per_radius, 
-					ypos - 2*pix_per_radius, 
-					zpos),
-				new THREE.Vector3(
-					xpos + direction*4*pix_per_radius, 
-					ypos - 2*pix_per_radius, 
-					zpos),
-				new THREE.Vector3(
-					xpos + direction*5*pix_per_radius, 
-					ypos - pix_per_radius, 
-					zpos),
-				new THREE.Vector3(
-					xpos + direction*7*pix_per_radius, 
-					ypos - pix_per_radius, 
-					zpos - 3*pix_per_radius)];
+				else{
+					single_array = [new THREE.Vector3(xpos, ypos, zpos)];
 
-				xpos = xpos + direction*7*pix_per_radius;
-				ypos = ypos - pix_per_radius;
-				zpos = zpos - 3*pix_per_radius;
+					under_loop = [
+						new THREE.Vector3(xpos, ypos, zpos),
+						new THREE.Vector3(
+							xpos + direction*2*pix_per_radius, 
+							ypos + pix_per_radius, 
+							zpos - 3*pix_per_radius)];
 
-				edge_loop = edge_loop.concat(under_loop);
-				single_array = single_array.concat(edge_loop);
+					xpos = xpos + direction*2*pix_per_radius;
+					ypos = ypos + pix_per_radius;
+					zpos = zpos - 3*pix_per_radius;	
+
+				}
+				
+
+				single_array = single_array.concat(under_loop);
+
 				//// three loops make up the "middle" loop between top twist and bottom chain
 				//all have the same r 
 				middle_r = 2*pix_per_radius;
@@ -588,8 +638,8 @@
 				zpos = up_from_center_z + middle_r*Math.sin(0);
 				//
 				xz_loop = []; // under loop on xz
-				xz_center_x = xpos + direction*middle_r;
-				xz_center_z = zpos + middle_r;
+				xz_center_x = xpos + direction*middle_r - direction*pix_per_radius;
+				xz_center_z = zpos + middle_r + pix_per_radius;
 
 				for (var t = 0; t < math.pi + math.pi/16; t = t + math.pi/16){
 					xz_x = xz_center_x - middle_r*Math.cos(t);
@@ -604,7 +654,7 @@
 				down_from_center_z = zpos - middle_r;
 
 				for (var t = 0; t < 7*math.pi/4 + math.pi/16; t = t + math.pi/16){
-					down_from_x = xpos - direction*t/(math.pi);
+					down_from_x = xpos - direction*t/(math.pi) - direction*pix_per_radius; //to make room for reorient later
 					down_from_y = down_from_center_y + middle_r*Math.cos(t);
 					down_from_z = down_from_center_z - (middle_r+pix_per_radius)*Math.sin(t);
 					middle_loop.push(new THREE.Vector3(down_from_x, down_from_y, down_from_z));
@@ -624,7 +674,7 @@
 				// based in v_chain_with_twist
 				post_single_array = [single_post_intersect]; //connect the two geometries explicitly
 
-				loop_x_r = 2*pix_per_radius + stitch_y_change["v_chain_with_twist"]/2;
+				loop_x_r = 2*pix_per_radius + stitch_x_change["chain"]/2;
 				loop_z_r = hook_r + pix_per_radius;
 				loop_center_x = xpos + direction*loop_r;
 				loop_center_z = 0; //force to 0 for alignment
@@ -666,7 +716,7 @@
 				//fix coords after loop
 				xpos = reorient_center_x + direction*reorient_r*math.cos(math.pi);
 				ypos = reorient_center_y + reorient_r*math.sin(math.pi);
-				zpos = 0; //should be zpos + 1/2, but forcing to 0 
+				zpos = zpos + 4*pix_per_radius;
 
 				reorient_array.push(
 					new THREE.Vector3(xpos, 
@@ -691,17 +741,50 @@
 				//fix coords settings
 				xpos = incline_center_x + direction*incline_x_r*math.cos(math.pi/2);
 				ypos = incline_center_y - incline_y_r*math.sin(math.pi/2);
-/*
+
 				//move coords
-				xpos = xpos + direction*3*pix_per_radius;
-				ypos = ypos + stitch_y_change["v_chain_with_twist"]/2;
+				ypos = ypos - pix_per_radius;
+				zpos = zpos + 2*pix_per_radius;
 				incline_loop.push(new THREE.Vector3(xpos, ypos, zpos));
 
-				if (stitch_x_change["single"] == undefined){
-					stitch_x_change["single"] = xpos - startx;
-					stitch_y_change["single"] = ypos - starty;
+				surface_loop = []; // on the surface of the piece
+				surface_x_r = 2*pix_per_radius;
+				surface_y_r = pix_per_radius;	
+
+				surface_center_x = xpos + surface_x_r;
+				surface_center_y = ypos - surface_y_r;
+
+				for (var t = 0; t < math.pi/2 + math.pi/16; t = t + math.pi/16){
+					xpos = surface_center_x - surface_x_r*math.cos(t);
+					ypos = surface_center_y - surface_y_r*math.sin(t);
+					surface_loop.push(new THREE.Vector3(xpos, ypos, zpos));
 				}
-*/
+				surface_loop.push(new THREE.Vector3(
+					xpos + direction*pix_per_radius, 
+					ypos, 
+					zpos));
+				surface_loop.push(
+					new THREE.Vector3(
+						xpos,// + direction*pix_per_radius, 
+						ypos, 
+						zpos - 3*pix_per_radius));
+				//xpos = xpos + direction*pix_per_radius;
+				//ypos = ypos + pix_per_radius;　
+				zpos = zpos - 3*pix_per_radius;
+
+				incline_loop = incline_loop.concat(surface_loop);
+
+				stitch_x_change["single"] = xpos - startx;
+				if ((last_stitch() == undefined) || (last_stitch() == "turn")){
+					stitch_y_change["single"] = ypos - starty;
+					stitch_z_change["single"] = zpos - startz;
+				}
+				else{
+					stitch_y_change["single"] = 0; //force y to 0
+					stitch_z_change["single"] = 0; // z seems to already be 0. 
+				}
+				console.log("stitch changes", stitch_x_change["single"], stitch_y_change["single"],stitch_z_change["single"])
+
 				reorient_array = reorient_array.concat(incline_loop);
 				post_single_array = post_single_array.concat(reorient_array);
 
@@ -785,7 +868,8 @@
 
 			draw_to_scene("v_chain_with_twist", yarn_material1);
 			turn();
-			draw_to_scene("single", yarn_material3);
+
+			draw_to_scene("single", yarn_material3);draw_to_scene("single", yarn_material3);
 
 			function render() {
 				var delta = clock.getDelta();
@@ -819,7 +903,7 @@
 				cur_stitch = undefined;
 				one_row = true; //first row only*/
 				scene = new THREE.Scene(); // reset scene
-				//scene.add( axisHelper );
+				scene.add( axisHelper );
 				tailed = false; // didn't "start" string yet
 				selected_yarn = default_yarn;
 
@@ -926,9 +1010,9 @@
 						}
 					}	
 				}
-				//check:
+				/*//check:
 				console.log("world_r and cur_world_r", world_r >= cur_world_r);
-				console.log("world_c and cur_world_c", world_c >= cur_world_c);
+				console.log("world_c and cur_world_c", world_c >= cur_world_c);*/
 			}
 			$( window ).resize(function() {
 				$("#textarea").width('100%');
