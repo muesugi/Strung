@@ -24,6 +24,37 @@
 		<a class="site_nav" id="chartify" href="chartify.html">Chartify</a> <!--79.8438px-->
 	</div>
 
+	<select id="wpi-select">
+		<option value="14">14 wpi (Fingering)</option>
+		<option value="12">12 wpi (Sport)</option>
+		<option value="11">11 wpi (DK)</option>
+		<option value="9">9 wpi (Worsted)</option>
+		<option value="8">8 wpi (Aran)</option>
+	 	<option value="7">7 wpi (Bulky)</option>
+		<option value="5" selected="selected">5 wpi (Super Bulky)</option>
+		<!--<option>Other<input></input></option>-->
+	</select>
+	<select id="hook-select">
+		<option value="2.25">2.25 mm (B-1)</option>
+		<option value="2.75">2.75 mm (C-2)</option>
+		<option value="3.25">3.25 mm (D-3)</option>
+		<option value="3.5">3.5 mm (E-4)</option>
+		<option value="3.75">3.75 mm (F-5)</option>
+	 	<option value="4">4 mm (G-6)</option>
+		<option value="4.5">4.5 mm (7)</option>
+		<option value="5">5 mm (H-8)</option>
+		<option value="5.5">5.5 mm (I-9)</option>
+		<option value="6">6 mm (J-10)</option>
+		<option value="6.5">6.5 mm (K-10.5)</option>
+		<option value="8">8 mm (L-11)</option>
+	 	<option value="9">9 mm (M/N-13)</option>
+		<option value="10">10 mm (N/P-15)</option>
+		<option value="11.5" selected="selected">11.5 mm (P)</option>
+		<option value="15">15 mm (P/Q)</option>
+		<option value="16">16 mm (Q)</option>
+		<option value="19">19 mm (S)</option>
+	</select>
+
 	<textarea id="textarea" spellcheck=false placeholder="chain(15); turn(); single(10); turn(); double(10); turn();">chain(10); turn(); single(10);</textarea>
 	
 		<script type="text/javascript">
@@ -86,6 +117,7 @@
 			//wraps-per-inch, a standard metric for yarn purchase and storage 
 			var yarn_wpi = 5; // where a wrap is defined as the diameter; wrap = 2 * radius
 			// yarn radius in inches is 1/(2*yarn_wpi)
+
 			var pix_per_radius = 1; // equiv to yarn radius in pixels
 
 			function inches_to_pixels(n_inches){
@@ -98,10 +130,14 @@
 			tail_length_inches = 2; 
 			var tail_length_pixels = inches_to_pixels(tail_length_inches); 
 
-			hook_diam_mm = 11.5; //standard hook sizing is hook diameter in mm
-			mm_per_inch = 25.4;
-			hook_r_inches = hook_diam_mm/(2*mm_per_inch); //converted to inches 
-			var hook_r = inches_to_pixels(hook_r_inches);
+			hook_diam_mm = 3.25//11.5; //standard hook sizing is hook diameter in mm
+			mm_per_inch = 25.4;//converted to inches 
+			
+			function hook_r_from_mm(hook_mm){
+				hook_r_in_inches = hook_mm/(2*mm_per_inch); 
+				return inches_to_pixels(hook_r_in_inches);
+			}
+			var hook_r = hook_r_from_mm(hook_diam_mm);
 
 			/// Set up stitch storage ////
 			var world = [[]]; // an array of arrays containing arrays of length 2 ([funcname, args]) 
@@ -191,6 +227,9 @@
 				   	ypos - (tail_length_pixels/5), zpos),
 				   new THREE.Vector3(xpos + direction*tail_length_pixels, ypos, zpos),
 				]);
+				//in case the value of tail_length pixels has changed due to wpi/hook
+				stitch_x_change["tail"] = tail_length_pixels;
+
 				tail_geom = new THREE.TubeGeometry(tail_curve, 64, pix_per_radius);
 				return tail_geom;
 			}
@@ -355,10 +394,11 @@
 					startz)
 				];
 
-				if (stitch_x_change["chain"] == undefined){
+				//if (stitch_x_change["chain"] == undefined){
+					//this was a good/efficient idea, but didn't take into account changed wpi/hook sizes
 					stitch_x_change["chain"] = math.abs(reorient_center_x - startx);
 					stitch_x_mag["chain"] = math.abs(loop_x_min - startx);
-				}
+				//}
 
 				chain_array = chain_array.concat(reorient_array);
 				return chain_array;
@@ -381,7 +421,7 @@
 				// y -> x
 				// z doesn't change
 				//set_global_coords(last_point.y, startx - last_point.x + starty, last_point.z);
-				if (stitch_x_change["v_chain"] == undefined){
+				//if (stitch_x_change["v_chain"] == undefined){
 					stitch_x_change["v_chain"] = (last_point.y - starty);
 					stitch_y_change["v_chain"] =
 						startx - last_point.x;
@@ -391,7 +431,7 @@
 						// efficiency too much
 					stitch_z_change["v_chain"] =
 						last_point.z - startz;
-				}
+				//}
 
 				chain_curve = new THREE.CatmullRomCurve3(chain_array);
 				chain_geom = new THREE.TubeGeometry(chain_curve, 64, pix_per_radius);
@@ -448,7 +488,7 @@
 				crossover_array.push(last_point);
 				post_chain_array = post_chain_array.concat(crossover_array);				
 				
-				if (stitch_x_change["v_chain_with_twist"] == undefined){
+				//if (stitch_x_change["v_chain_with_twist"] == undefined){
 					stitch_x_change["v_chain_with_twist"] = last_point.x - post_startx;
 					stitch_y_change["v_chain_with_twist"] =
 						stitch_x_change["chain"] + post_starty;
@@ -458,7 +498,7 @@
 						// efficiency too much
 					stitch_z_change["v_chain_with_twist"] =
 						last_point.z - post_startz;
-				}
+				//}
 
 				//establish both geometries
 				post_chain_curve = new THREE.CatmullRomCurve3(post_chain_array);
@@ -787,8 +827,22 @@
 				header_spacing();
 				default_and_parse();
 			});
+			
+			$("#wpi-select").change(function(){
+				//lots of vars depend on wpi, need to redo their calculations
+				yarn_wpi = Number(this.value);
+				tail_length_pixels = inches_to_pixels(tail_length_inches);
+				hook_r = hook_r_from_mm(hook_diam_mm);
+				default_and_parse();
+			});
+			$("#hook-select").change(function(){
+				hook_diam_mm = Number(this.value);
+				hook_r = hook_r_from_mm(hook_diam_mm);
+				default_and_parse();
+			});
 
-			function default_and_parse(){
+			//onchange="yarn_wpi = Number(this.value); default_and_parse();"
+			function set_defaults(){
 				x = start_x;
 				y = start_y;
 				z = start_z;
@@ -799,8 +853,10 @@
 				scene = new THREE.Scene(); // reset scene
 				scene.add( axisHelper );
 				selected_yarn = default_yarn;
-
-		    	parse_input($("#textarea").val()); //style choice to pass the string. 
+			}
+			function default_and_parse(){
+				set_defaults();
+		    	parse_input($("#textarea").val()); //style choice to pass the string
 			}
 
 			function parse_input(pattern_string){
