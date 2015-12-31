@@ -130,11 +130,13 @@
 			function get_from_world(r, c, i){ 
 			//produces undefined vals instead of raising errors
 				i = i || 0;
-				if ((r >= 0 && r <= world_r) && (c >= 0 && (c <= world_c || world_c == -1))){ // r and c are valid
-					slot_from_world = world[r][c];
-					if ((slot_from_world != undefined) && ((i >= 0) && (slot_from_world.length > i))){
-						//a bit inelegant but assumed short-circuiting did not seem to work correctly
-						return world[r][c][i];
+				if (r >= 0 && r <= world_r){//r is valid
+					if (c >= 0 && c < world[r].length){//c is valid
+						slot_from_world = world[r][c];
+						if ((slot_from_world != undefined) && ((i >= 0) && (slot_from_world.length > i))){
+							//a bit inelegant but assumed short-circuiting did not seem to work correctly
+							return world[r][c][i];
+						}
 					}
 				}
 				return undefined;
@@ -528,9 +530,8 @@
 				ypos = starty;
 				zpos = startz;
 				single_array = [];
-				console.log("last stitch", last_stitch());
 
-				if ((last_stitch() == undefined) || (last_stitch() == "turn")){ // for now, may make if last is turn
+				if (last_stitch() == "turn"){
 					single_array = [
 					new THREE.Vector3(xpos + direction*pix_per_radius,
 					ypos - pix_per_radius, zpos - pix_per_radius),
@@ -775,7 +776,7 @@
 				incline_loop = incline_loop.concat(surface_loop);
 
 				stitch_x_change["single"] = xpos - startx;
-				if ((last_stitch() == undefined) || (last_stitch() == "turn")){
+				if (last_stitch() == "turn"){
 					stitch_y_change["single"] = ypos - starty;
 					stitch_z_change["single"] = zpos - startz;
 				}
@@ -783,7 +784,6 @@
 					stitch_y_change["single"] = 0; //force y to 0
 					stitch_z_change["single"] = 0; // z seems to already be 0. 
 				}
-				console.log("stitch changes", stitch_x_change["single"], stitch_y_change["single"],stitch_z_change["single"])
 
 				reorient_array = reorient_array.concat(incline_loop);
 				post_single_array = post_single_array.concat(reorient_array);
@@ -840,26 +840,8 @@
 			};*/
 
 			///////////// SCENE ADD ////////////
-			function draw_to_scene(stitch, material){
-				material = material || yarn_material1;//should never be called, but just in case
-				if (stitch == "turn"){turn();}
-				else{
-					/*prev_stitch = cur_stitch;
-					cur_stitch = stitch;*/
-					geom_call = stitch + "_geometry";
-					stitch_geometry = window[geom_call](x, y, z); //calls correct symbol based on funcname
-					scene.add(new THREE.Line(stitch_geometry, material)); 
-					//create THREE.Line instead for unfilled model (better able to see individual lines),
-					// THREE.Mesh for a smoother model
 
-					x = x + direction * stitch_x_change[stitch]; //only x should change for most stitches,
-					// especially all that are repeated
-					y = y + stitch_y_change[stitch]; 
-					z = z + stitch_z_change[stitch]; 
-				}
-			}
-
-			/// Testing specific function calls. Set default/placeholder here
+			/*/// Testing specific function calls. Set default/placeholder here
 			direction = -1 ;
 			draw_to_scene("tail", yarn_material0);
 			draw_to_scene("slip", yarn_material1);
@@ -870,7 +852,7 @@
 			turn();
 
 			draw_to_scene("single", yarn_material3);draw_to_scene("single", yarn_material3);
-
+*/
 			function render() {
 				var delta = clock.getDelta();
 				requestAnimationFrame( render );
@@ -879,15 +861,18 @@
 			}
 			render();
 
-
-			/// TEXTAREA INPUT
-
 			$("#textarea").keypress(function(event){
 			    if (event.which == 59){ // on semicolon, parse input
 			    	//establish defaults
 			    	default_and_parse();
 			    }
 			})
+
+			$( window ).resize(function() {
+				$("#textarea").width('100%');
+				header_spacing();
+				default_and_parse();
+			});
 
 			function default_and_parse(){
 				//ypos_0 = $("#container").height() - 80;
@@ -938,6 +923,7 @@
 						draw_to_scene("v_chain_with_twist", selected_yarn);
 						turn();*/
 						n_verts = Number(split_func_call[1].slice(0, -1));
+						if (n_verts == 0){ n_verts = 1;}//lazy safeguard
 						world[world_r].push([]); // add column at world_c index
 						world_c++;
 						for (var v = 0; v < n_verts - 1; v++){ //all but last
@@ -999,7 +985,6 @@
 				draw_to_scene("tail", selected_yarn); //add material here
 				draw_to_scene("slip", selected_yarn);
 				//assumes there are world_r + 1 rows and world_c + 1 cols
-				console.log(world_r, world_c);
 				for (var r = 0; r < world_r + 1; r++){
 					for (var c = 0; c < world[r].length; c++){
 						cur_col = world[r][c];
@@ -1014,11 +999,27 @@
 				console.log("world_r and cur_world_r", world_r >= cur_world_r);
 				console.log("world_c and cur_world_c", world_c >= cur_world_c);*/
 			}
-			$( window ).resize(function() {
-				$("#textarea").width('100%');
-				header_spacing();
-				default_and_parse();
-			});
+			function draw_to_scene(stitch, material){
+				material = material || yarn_material1;//should never be called, but just in case
+				console.log(cur_world_r, cur_world_c);
+				console.log("cur stitch", cur_stitch());
+				console.log("last stitch", last_stitch());
+				if (stitch == "turn"){turn();}
+				else{
+					/*prev_stitch = cur_stitch;
+					cur_stitch = stitch;*/
+					geom_call = stitch + "_geometry";
+					stitch_geometry = window[geom_call](x, y, z); //calls correct symbol based on funcname
+					scene.add(new THREE.Mesh(stitch_geometry, material)); 
+					//create THREE.Line instead for unfilled model (better able to see individual lines),
+					// THREE.Mesh for a smoother model
+
+					x = x + direction * stitch_x_change[stitch]; //only x should change for most stitches,
+					// especially all that are repeated
+					y = y + stitch_y_change[stitch]; 
+					z = z + stitch_z_change[stitch]; 
+				}
+			}
 
 		</script>
 		
