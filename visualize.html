@@ -27,16 +27,18 @@
 	</div>
 	<div id="selects-div">
 		<select id="wpi-select" style="width:50%;">
+			<option class="select-title selected" value="">Yarn Weight (Wraps per Inch)</option>
 			<option value="14">14 wpi (Fingering)</option>
 			<option value="12">12 wpi (Sport)</option>
 			<option value="11">11 wpi (DK)</option>
 			<option value="9">9 wpi (Worsted)</option>
 			<option value="8">8 wpi (Aran)</option>
 		 	<option value="7">7 wpi (Bulky)</option>
-			<option value="5" selected="selected">5 wpi (Super Bulky)</option>
+			<option value="5">5 wpi (Super Bulky)</option>
 			<!--<option>Other<input></input></option>-->
 		</select> 
 		<select id="hook-select">
+			<option class="select-title selected" value="">Hook Size (mm) </option>
 			<option value="2.25">2.25 mm (B-1)</option>
 			<option value="2.75">2.75 mm (C-2)</option>
 			<option value="3.25">3.25 mm (D-3)</option>
@@ -51,7 +53,7 @@
 			<option value="8">8 mm (L-11)</option>
 		 	<option value="9">9 mm (M/N-13)</option>
 			<option value="10">10 mm (N/P-15)</option>
-			<option value="11.5" selected="selected">11.5 mm (P)</option>
+			<option value="11.5">11.5 mm (P)</option>
 			<option value="15">15 mm (P/Q)</option>
 			<option value="16">16 mm (Q)</option>
 			<option value="19">19 mm (S)</option>
@@ -63,6 +65,7 @@
 			//Site formatting
 			$("#wpi-select").selectric();
 			$("#hook-select").selectric();
+			
 			//$(".selects").width(.5*window.innerWidth);
 			header_spacing();
 			function header_spacing(){

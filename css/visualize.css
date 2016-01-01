@@ -9,8 +9,19 @@
 	bottom:100%; /*drop up instead of dropdown*/
 }
 
+.selectric-scroll li:nth-child(1) {
+    display:none;
+}​
 .selectric-wrapper{
 	width:50%;
 	float:left;
+}
+.selectric .label{
+	font-size: 16px;
+	text-align: center;
+}
+.selectric-scroll li{
+	font-size: 14px;
+	text-align: center;
 }
 /*other selectric customizations in selectric.css*/
