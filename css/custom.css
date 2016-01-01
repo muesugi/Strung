@@ -39,6 +39,7 @@ a:link, a:visited, a:hover, a:active {
 #textarea {
 	width: 100%;
 	font-size: 16px; 
+	left:0px;
 	bottom:0px;
 	position: fixed;
 	height: 3em;

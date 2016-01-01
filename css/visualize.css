@@ -1,13 +1,16 @@
-#visualize{
-	color:#D05353;
+#visualize{ color:#D05353;}
+
+/*100% of window width*/
+#selects-div{ position:fixed; width:100%; bottom: 70px;}
+
+#wpi-select{}
+#hook-select{}
+#menu:hover ul li:hover ul{
+	bottom:100%; /*drop up instead of dropdown*/
 }
-.selects{
-	position:absolute;
-	bottom: 80px; /*48px (textarea) plus some*/
+
+.selectric-wrapper{
+	width:50%;
+	float:left;
 }
-#wpi-select{
-	margin-left:50px;
-}
-#hook-select{
-	margin-left:300px;
-}
+/*other selectric customizations in selectric.css*/

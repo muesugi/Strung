@@ -8,6 +8,8 @@
 		<script src="js/math.min.js"></script>
 		<script src="js/TrackballControls.js"></script>
 		<link href='https://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
+		<script src="js/jquery.selectric.js"></script>
+		<link rel="stylesheet" href="css/selectric.css">
 
 		<link rel="stylesheet" href="css/custom.css">
 		<link rel="stylesheet" href="css/visualize.css">
@@ -23,41 +25,45 @@
 		<a class="site_nav" id="visualize" href="visualize.html">Visualize</a><!--86.4844px-->
 		<a class="site_nav" id="chartify" href="chartify.html">Chartify</a> <!--79.8438px-->
 	</div>
+	<div id="selects-div">
+		<select id="wpi-select" style="width:50%;">
+			<option value="14">14 wpi (Fingering)</option>
+			<option value="12">12 wpi (Sport)</option>
+			<option value="11">11 wpi (DK)</option>
+			<option value="9">9 wpi (Worsted)</option>
+			<option value="8">8 wpi (Aran)</option>
+		 	<option value="7">7 wpi (Bulky)</option>
+			<option value="5" selected="selected">5 wpi (Super Bulky)</option>
+			<!--<option>Other<input></input></option>-->
+		</select> 
+		<select id="hook-select">
+			<option value="2.25">2.25 mm (B-1)</option>
+			<option value="2.75">2.75 mm (C-2)</option>
+			<option value="3.25">3.25 mm (D-3)</option>
+			<option value="3.5">3.5 mm (E-4)</option>
+			<option value="3.75">3.75 mm (F-5)</option>
+		 	<option value="4">4 mm (G-6)</option>
+			<option value="4.5">4.5 mm (7)</option>
+			<option value="5">5 mm (H-8)</option>
+			<option value="5.5">5.5 mm (I-9)</option>
+			<option value="6">6 mm (J-10)</option>
+			<option value="6.5">6.5 mm (K-10.5)</option>
+			<option value="8">8 mm (L-11)</option>
+		 	<option value="9">9 mm (M/N-13)</option>
+			<option value="10">10 mm (N/P-15)</option>
+			<option value="11.5" selected="selected">11.5 mm (P)</option>
+			<option value="15">15 mm (P/Q)</option>
+			<option value="16">16 mm (Q)</option>
+			<option value="19">19 mm (S)</option>
+		</select>
 
-	<select class="selects" id="wpi-select">
-		<option value="14">14 wpi (Fingering)</option>
-		<option value="12">12 wpi (Sport)</option>
-		<option value="11">11 wpi (DK)</option>
-		<option value="9">9 wpi (Worsted)</option>
-		<option value="8">8 wpi (Aran)</option>
-	 	<option value="7">7 wpi (Bulky)</option>
-		<option value="5" selected="selected">5 wpi (Super Bulky)</option>
-		<!--<option>Other<input></input></option>-->
-	</select>
-	<select class="selects" id="hook-select">
-		<option value="2.25">2.25 mm (B-1)</option>
-		<option value="2.75">2.75 mm (C-2)</option>
-		<option value="3.25">3.25 mm (D-3)</option>
-		<option value="3.5">3.5 mm (E-4)</option>
-		<option value="3.75">3.75 mm (F-5)</option>
-	 	<option value="4">4 mm (G-6)</option>
-		<option value="4.5">4.5 mm (7)</option>
-		<option value="5">5 mm (H-8)</option>
-		<option value="5.5">5.5 mm (I-9)</option>
-		<option value="6">6 mm (J-10)</option>
-		<option value="6.5">6.5 mm (K-10.5)</option>
-		<option value="8">8 mm (L-11)</option>
-	 	<option value="9">9 mm (M/N-13)</option>
-		<option value="10">10 mm (N/P-15)</option>
-		<option value="11.5" selected="selected">11.5 mm (P)</option>
-		<option value="15">15 mm (P/Q)</option>
-		<option value="16">16 mm (Q)</option>
-		<option value="19">19 mm (S)</option>
-	</select>
-
-	<textarea id="textarea" spellcheck=false placeholder="chain(15); turn(); single(10); turn(); double(10); turn();">chain(10); turn(); single(10);</textarea>
-	
+		<textarea id="textarea" spellcheck=false placeholder="chain(15); turn(); single(10); turn(); double(10); turn();">chain(10); turn(); single(10);</textarea>
+	</div>
 		<script type="text/javascript">
+			//Site formatting
+			$("#wpi-select").selectric();
+			$("#hook-select").selectric();
+			//$(".selects").width(.5*window.innerWidth);
 			header_spacing();
 			function header_spacing(){
 				window_w = window.innerWidth;
@@ -78,7 +84,7 @@
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			document.body.appendChild(renderer.domElement);
 
-			var x_max = window.innerWidth/4/2; //2 for testing only
+			var x_max = window.innerWidth/4/2;
 			var start_x = x_max; // start_x, start_y, and start_z used for global start
 			var start_y = 000; // startx, starty, startz used for some local start values
 			var start_z = 000;
@@ -94,7 +100,7 @@
 			cameraControls.target.set(0, 0, 0);
 			var clock = new THREE.Clock();
 			var axisHelper = new THREE.AxisHelper( 50);
-			scene.add( axisHelper );
+			//scene.add( axisHelper );
 
 			function render() {
 				var delta = clock.getDelta();
@@ -853,7 +859,7 @@
 				world_r = 0;
 				world_c = 0; //would reset cur world index vals too, but they'll be reset
 				scene = new THREE.Scene(); // reset scene
-				scene.add( axisHelper );
+				//scene.add( axisHelper );
 				selected_yarn = default_yarn;
 			}
 			function default_and_parse(){
