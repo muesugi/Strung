@@ -9,9 +9,6 @@
 	bottom:100%; /*drop up instead of dropdown*/
 }
 
-.selectric-scroll li:nth-child(1) {
-    display:none;
-}​
 .selectric-wrapper{
 	width:50%;
 	float:left;
