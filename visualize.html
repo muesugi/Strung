@@ -73,7 +73,7 @@
 				option_label = $("#wpi-div").find(".label").text();
 				new_label = "Yarn Weight: " + option_label; 
 				$("#wpi-div.label").html(new_label);
-				console.log($("#wpi-div.label").html());
+				//console.log($("#wpi-div.label").html());
 			}
 			label_yarn_label();
 			$("#wpi-select").change(function(){label_yarn_label();
@@ -82,7 +82,7 @@
 				option_label = $("#hook-div").find(".label").text();
 				new_label = "Hook Size: " + option_label; 
 				$("#hook-div.label").text(new_label);
-				console.log($("#hook-div.label").text());
+				//console.log($("#hook-div.label").text());
 			}
 			$("#hook-select").change(function(){label_hook_label();
 			});
@@ -239,7 +239,7 @@
 				}
 				if (valid_index(r, world_r)
 					&& valid_index(c + 1, world[r].length - 1)){
-					console.log("next stitch,", r, c + 1);
+					//console.log("next stitch,", r, c + 1);
 					return get_from_world(r, c + 1, i);
 				}
 				else{ return get_from_world(r + 1, 0); }//in the next row
@@ -396,7 +396,6 @@
 				loop_x_min = loop_center_x; // change throughout loop to get x_change for chain, doesn't affect visual rendering
 
 				for (var t = loop_start_theta; t <= loop_start_theta + loop_theta_d; t = t + (math.pi/16)){ 
-					console.log("loop t", t);
 					xpos = loop_center_x + direction*loop_x_r*math.cos(t);
 					zpos = loop_center_z + loop_z_r*math.sin(t);
 
@@ -426,9 +425,6 @@
 				///zpos no longer matters here, will use startz as next zpos
 
 				reorient_center_x = xpos + direction*pix_per_radius;
-
-				console.log("== calculation? point g", reorient_center_x == startx + direction*(5*pix_per_radius + hook_r));
-				console.log("== calculation? point g minus startx", reorient_center_x, startx, reorient_center_x -startx,direction*(5*pix_per_radius + hook_r));
 				reorient_center_y = ypos - 3*pix_per_radius;
 
 				reorient_start_theta =  7*math.pi/4;
@@ -442,7 +438,6 @@
 					starty,
 					startz)
 				];
-				//stitch_x_mag["chain"] = math.abs(loop_x_min - startx);
 				chain_array = chain_array.concat(reorient_array);
 				return chain_array;
 			}
@@ -860,7 +855,7 @@
 				//all positive values, sign is denoted by the direction variable
 				"tail": tail_length_pixels,
 				"slip": 2*pix_per_radius,
-				"chain": undefined,
+				"chain": 4*pix_per_radius + hook_r,
 				"v_chain_with_twist": undefined
 			};
 			/*stitch_y_mag = { //need to define later
@@ -1013,7 +1008,6 @@
 				material = material || yarn_material3;//should never be called, but just in case
 				if (stitch == "turn"){turn();}
 				else{
-					console.log(stitch_x_change["chain"]);
 					if ((stitch.indexOf("v_chain") == 0) && (last_stitch() == "single")){
 						y = y + 2*stitch_x_change["chain"];
 					}
