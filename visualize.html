@@ -62,7 +62,7 @@
 		</select>
 		</div>
 
-		<textarea id="textarea" spellcheck=false placeholder="chain(15); turn(); single(10); turn(); double(10); turn();">chain(10); turn(); single(10); turn();</textarea>
+		<textarea id="textarea" spellcheck=false placeholder="chain(15); turn(); single(10); turn(); double(10); turn();">chain(10); turn();</textarea>
 	</div>
 		<script type="text/javascript">
 			//Site formatting
@@ -451,39 +451,30 @@
 
 			function v_chain_geometry(startx, starty, startz){
 				chain_array = ch_array(startx, starty, startz);
-				last_point = chain_array.pop();
-				chain_array.push(last_point);
+				chain_curve = new THREE.CatmullRomCurve3(chain_array);
+				chain_geom = new THREE.TubeGeometry(chain_curve, 64, pix_per_radius);
+
+				//could use the following, but just in case chain_geometry changes in the future independent of ch_array (unlikely, but just a safeguard)
+				//chain_geom = chain_geometry(startx, starty, startz);
 
 				// with a rotation about z axis of 3pi/2, axis:
 				// x -> y
 				// y -> x
 				// z doesn't change
-				//set_global_coords(last_point.y, startx - last_point.x + starty, last_point.z);
-				//if (stitch_x_change["v_chain"] == undefined){
-					stitch_x_change["v_chain"] = (last_point.y - starty);
-					stitch_y_change["v_chain"] =
-						startx - last_point.x;
-						//NOT allowed to call v_chain before chain
-						//might want to implememt 
-						// a called-stiches list if it doenst affect
-						// efficiency too much
-					stitch_z_change["v_chain"] =
-						last_point.z - startz;
-				//}
-
-				chain_curve = new THREE.CatmullRomCurve3(chain_array);
-				chain_geom = new THREE.TubeGeometry(chain_curve, 64, pix_per_radius);
 
 				/////rotate//////
-				//rotate around origin
+				//rotate around origin,
+				//if direction == -1, 3*math.pi/2);
+				//if direction == 1, math.pi/2);
 				chain_geom.translate(-startx,-starty,-startz);
-				chain_geom.rotateZ(3*math.pi/2);
+				chain_geom.rotateZ(math.pi - (direction*math.pi/2));
+
 				//move back to appropriate position
 				chain_geom.translate(startx, starty, startz);
 				return chain_geom;
 			}
 			function v_chain_with_twist_geometry(startx, starty, startz){
-			chain_array = ch_array(startx, starty, startz);
+				chain_array = ch_array(startx, starty, startz);
 				//get xyzpos vals from last vector in chain_array
 				chain_last = chain_array.pop();
 				chain_array.push(chain_last);
@@ -525,19 +516,6 @@
 					post_startz + 2*pix_per_radius);
 				crossover_array.push(last_point);
 				post_chain_array = post_chain_array.concat(crossover_array);				
-				
-				//if (stitch_x_change["v_chain_with_twist"] == undefined){
-					stitch_x_change["v_chain_with_twist"] = last_point.x - post_startx;
-					stitch_y_change["v_chain_with_twist"] =
-						stitch_x_change["chain"] + post_starty;
-						//NOT allowed to call v_chain before chain
-						//might want to implememt 
-						// a called-sttiches list if it doenst affect
-						// efficiency too much
-					stitch_z_change["v_chain_with_twist"] =
-						last_point.z - post_startz;
-				//}
-
 				//establish both geometries
 				post_chain_curve = new THREE.CatmullRomCurve3(post_chain_array);
 				post_chain_geom = new THREE.TubeGeometry(post_chain_curve, 64, pix_per_radius);
@@ -548,11 +526,18 @@
 				chain_geom.translate(-startx,-starty,-startz);
 				post_chain_geom.translate(-post_startx,-post_starty,-post_startz);
 				//rotate
-				chain_geom.rotateZ(3*math.pi/2);
+				chain_geom.rotateZ(math.pi - (direction*math.pi/2));
 				post_chain_geom.rotateZ(math.pi - math.pi/16);
+				// with a rotation about z axis of pi, axis:
+				// x -> -x
+				// y -> -y
+				// z doesn't change
+
 				//move back to appropriate positions
 				chain_geom.translate(startx, starty, startz);
-				post_chain_geom.translate(startx, starty + (startx - post_startx), startz);
+				post_chain_geom.translate(startx, 
+					starty - direction*(startx - post_startx),
+					startz);
 				//merge geoms
 				chain_geom.merge(post_chain_geom, post_chain_geom.matrix);
 				return chain_geom;
@@ -835,19 +820,22 @@
 				"tail": tail_length_pixels,
 				"slip": 2*pix_per_radius,
 				"chain": 5*pix_per_radius + hook_r, 
-				"v_chain_with_twist": undefined
+				"v_chain": 0,
+				"v_chain_with_twist": pix_per_radius
 			};
 			stitch_y_change = {
 				"tail": 0,
 				"slip": 0,
 				"chain": 0, 
-				"v_chain_with_twist": undefined
+				"v_chain": 5*pix_per_radius + hook_r,
+				"v_chain_with_twist": 5*pix_per_radius + hook_r // same as v_chain, reasoning behind this one is a bit fuzzy
 			};
 			stitch_z_change = {
 				"tail": 0,
 				"slip": 0,
 				"chain": 0, 
-				"v_chain_with_twist": undefined
+				"v_chain": 0,
+				"v_chain_with_twist": pix_per_radius
 			};
 			/////
 			stitch_x_mag = { // think of magnitiude as total width
@@ -856,6 +844,7 @@
 				"tail": tail_length_pixels,
 				"slip": 2*pix_per_radius,
 				"chain": 4*pix_per_radius + hook_r,
+				"v_chain": 0,
 				"v_chain_with_twist": undefined
 			};
 			/*stitch_y_mag = { //need to define later
@@ -906,12 +895,12 @@
 				x = start_x;
 				y = start_y;
 				z = start_z;
-				direction = -1;
+				direction = 1;
 				world = [[]]; // start with one row, one column
 				world_r = 0;
 				world_c = 0; //would reset cur world index vals too, but they'll be reset
 				scene = new THREE.Scene(); // reset scene
-				//scene.add( axisHelper );
+				scene.add( axisHelper );
 				selected_yarn = default_yarn;
 			}
 			function default_and_parse(){
