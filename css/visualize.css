@@ -1,10 +1,13 @@
 #visualize{ color:#D05353;}
 
+#orientation{
+	position:absolute;
+	bottom:120px;
+	right:25px;
+}
 /*100% of window width*/
 #selects-div{ position:fixed; width:100%; bottom: 70px;}
 
-#wpi-select{}
-#hook-select{}
 #menu:hover ul li:hover ul{
 	bottom:100%; /*drop up instead of dropdown*/
 }
