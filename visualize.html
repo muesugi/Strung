@@ -256,8 +256,21 @@
 					//get correct above column
 					return get_from_world(r, world[r - 1].length - 2 - c);
 				}
+				else{return undefined;}
 			}
-			//function below_stitch(){return get_from_world(cur_world_r - 1, cur_world_c);}
+			function below_stitch(r, c, i){
+				if (r == undefined){
+					r = r || cur_world_r;
+					c = c || cur_world_c;
+					i = i || 0;
+				}
+				r = r - 1;
+				if (valid_index(r, world_r)){
+					//get correct above column
+					return get_from_world(r, world[r + 1].length - 2 - c);
+				}
+				else{return undefined;}
+			}
 
 			// using "_" naming convention for all geometry funcs to 
 			// differentiate custom functions from THREE.js builtins
@@ -601,19 +614,21 @@
 					under_startx = xpos + direction*2*pix_per_radius;
 					under_starty = ypos - 2*pix_per_radius;
 					under_startz = zpos;
-
+					console.log(below_stitch());
+					under_end_x = xpos + stitch_x_mag[below_stitch()];
 					under_loop = [
-						new THREE.Vector3(under_startx, under_starty, under_startz),
+						new THREE.Vector3(under_startx, //xpos + 2r
+							under_starty, under_startz),
 						new THREE.Vector3(
-							under_startx + direction*2*pix_per_radius, 
+							under_startx + direction*2*pix_per_radius, //xpos + 4r
 							under_starty, 
 							under_startz),
 						new THREE.Vector3(
-							under_startx + direction*3*pix_per_radius, 
+							under_startx + direction*3*pix_per_radius,//xpos + 5r 
 							under_starty + pix_per_radius, 
 							under_startz),
 						new THREE.Vector3(
-							under_startx + direction*5*pix_per_radius, 
+							under_end_x, //xpos + 7r
 							under_starty + pix_per_radius, 
 							under_startz - 3*pix_per_radius)];
 
@@ -895,7 +910,7 @@
 				x = start_x;
 				y = start_y;
 				z = start_z;
-				direction = 1;
+				direction = -1;
 				world = [[]]; // start with one row, one column
 				world_r = 0;
 				world_c = 0; //would reset cur world index vals too, but they'll be reset
