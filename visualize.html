@@ -62,7 +62,7 @@
 		</select>
 		</div>
 
-		<textarea id="textarea" spellcheck=false placeholder="chain(15); turn(); single(10); turn(); double(10); turn();">chain(10); turn();</textarea>
+		<textarea id="textarea" spellcheck=false placeholder="chain(15); turn(); single(10); turn(); double(10); turn();">chain(10); turn(); single(10);</textarea>
 	</div>
 		<script type="text/javascript">
 			//Site formatting
@@ -264,12 +264,9 @@
 					c = c || cur_world_c;
 					i = i || 0;
 				}
-				r = r - 1;
-				if (valid_index(r, world_r)){
-					//get correct above column
-					return get_from_world(r, world[r + 1].length - 2 - c);
-				}
-				else{return undefined;}
+				console.log("below of ", r, c, i);
+				//r - 1 should always be a valid index in world
+				return get_from_world(r - 1, world[r - 1].length - 2 - c);
 			}
 
 			// using "_" naming convention for all geometry funcs to 
@@ -572,6 +569,18 @@
 				single_array = [];
 
 				if (last_stitch() == "turn"){
+					stitch_x_mag["single"] = 
+						pix_per_radius*(8 - math.cos(-7*math.pi/16) + 2*math.cos(17*math.pi/16)) 
+						+ hook_r*(1 - math.cos(-7*math.pi/16))
+						- (7/4);
+					stitch_x_change["single"] = 
+						-pix_per_radius*(8 - math.cos(-7*math.pi/16) + 2*math.cos(17*math.pi/16)) 
+						+ hook_r*(1 - math.cos(-7*math.pi/16))
+						- (7/4);
+					stitch_y_change["single"] = 
+						- pix_per_radius*((17 + 3*math.sqrt(2))/2 + math.sqrt(2) - 2*math.sin(17*math.pi/16)  + math.sin(9*math.pi/16))
+						- hook_r*((5 + 2*math.sqrt(2) + 2*math.sin(9*math.pi/16))/8);
+
 					single_array = [
 					new THREE.Vector3(xpos + direction*pix_per_radius,
 					ypos - pix_per_radius, zpos - pix_per_radius),
@@ -587,7 +596,7 @@
 					edge_z_r = pix_per_radius;
 
 					//(~ellipse) center coordinates
-					edge_center_x = xpos - edge_x_r - pix_per_radius;
+					edge_center_x = xpos - edge_x_r - direction*pix_per_radius;
 					edge_center_y = ypos - edge_y_r - pix_per_radius;
 					edge_center_z = zpos - edge_z_r - pix_per_radius;
 
@@ -615,7 +624,7 @@
 					under_starty = ypos - 2*pix_per_radius;
 					under_startz = zpos;
 					console.log(below_stitch());
-					under_end_x = xpos + stitch_x_mag[below_stitch()];
+					under_end_x = xpos + (stitch_x_mag["single"] - stitch_x_mag[below_stitch()])/4;
 					under_loop = [
 						new THREE.Vector3(under_startx, //xpos + 2r
 							under_starty, under_startz),
@@ -637,12 +646,26 @@
 					zpos = under_startz - 3*pix_per_radius;				
 				}
 				else{
+					stitch_x_mag["single"] = 
+						pix_per_radius*(11-math.cos(-7*math.pi/16)+2*math.cos(17*math.pi/16)) 
+						+ hook_r*(1 - math.cos(-7*math.pi/16))
+						- (7/4);
+					stitch_x_change["single"] = 
+						pix_per_radius*(11-math.cos(-7*math.pi/16)+2*math.cos(17*math.pi/16)) 
+						+ hook_r*(1 - math.cos(-7*math.pi/16))
+						- (7/4);
+					stitch_y_change["single"] = 0;
+						/*-pix_per_radius*(-math.sqrt(2) -(7/2) + 2*math.sin(17*math.pi/16) - math.sin(9*math.pi/16))
+						- hook_r*((1/8) + (1/4)*math.sin(9*math.pi/16));*/
+					stitch_z_change["single"] = 
+						(hook_r + pix_per_radius)*math.sin(-7*math.pi/16) + 4*pix_per_radius;
 					single_array = [new THREE.Vector3(xpos, ypos, zpos)];
-
+					console.log("whats it adding based on below?", (stitch_x_mag["single"] - stitch_x_mag[below_stitch()])/2);
 					under_loop = [
 						new THREE.Vector3(xpos, ypos, zpos),
 						new THREE.Vector3(
-							xpos,// + direction*2*pix_per_radius, 
+							xpos + (stitch_x_mag["single"] - stitch_x_mag[below_stitch()])/2,
+							// + direction*2*pix_per_radius, 
 							ypos + pix_per_radius, 
 							zpos - 3*pix_per_radius)];
 
@@ -650,7 +673,10 @@
 					ypos = ypos + pix_per_radius;
 					zpos = zpos - 3*pix_per_radius;	
 				}
-				
+				//for testing purposes only
+				psx = xpos;
+				psy = ypos;
+				psz = zpos;
 
 				single_array = single_array.concat(under_loop);
 
@@ -682,22 +708,22 @@
 				}
 				//
 				//down_from_loop, opposite of (and based on) up_from_loop
+				down_from_start_x = xpos;
 				down_from_center_y = ypos - middle_r;
 				down_from_center_z = zpos - middle_r;
 
 				for (var t = 0; t < 7*math.pi/4 + math.pi/16; t = t + math.pi/16){
-					down_from_x = xpos - direction*t/(math.pi) - direction*pix_per_radius; //to make room for reorient later
-					down_from_y = down_from_center_y + middle_r*Math.cos(t);
-					down_from_z = down_from_center_z - (middle_r+pix_per_radius)*Math.sin(t);
-					middle_loop.push(new THREE.Vector3(down_from_x, down_from_y, down_from_z));
+					xpos = down_from_start_x - direction*t/(math.pi) 
+					- direction*pix_per_radius; //to make room for reorient later
+					ypos = down_from_center_y + middle_r*Math.cos(t);
+					zpos = down_from_center_z - (middle_r+pix_per_radius)*Math.sin(t);
+					middle_loop.push(new THREE.Vector3(xpos, ypos, zpos));
 				}
 				single_array = single_array.concat(middle_loop);
-				//update coords after loop
-				xpos = xpos - direction*(7/4);
-				ypos = down_from_center_y + middle_r*Math.cos(7*math.pi/4);
-				zpos = down_from_center_z - (middle_r+pix_per_radius)*Math.sin(7*math.pi/4);
+				
 				//
 				//new coord update for post single
+				xpos = xpos + direction*pix_per_radius;
 				ypos = ypos + stitch_y_change["v_chain_with_twist"]/2;
 				zpos = zpos - 2*pix_per_radius;
 				single_post_intersect = new THREE.Vector3(xpos, ypos, zpos);
@@ -706,24 +732,19 @@
 				// based in v_chain_with_twist
 				post_single_array = [single_post_intersect]; //connect the two geometries explicitly
 
-				loop_x_r = 2*pix_per_radius + stitch_x_change["chain"]/2;
-				loop_z_r = hook_r + pix_per_radius;
+				loop_r = hook_r + pix_per_radius;
 				loop_center_x = xpos + direction*loop_r;
 				loop_center_z = 0; //force to 0 for alignment
 
 				loop_start_theta = -3*math.pi/2;
-				loop_theta_d = math.pi;//angular displacement
-				//crucial that this is the same as loop_theta_d in chain. 
+				loop_theta_d = math.pi + (math.pi/16);//angular displacement
 
-				for (var t = loop_start_theta; t <= loop_start_theta + loop_theta_d +(math.pi/16); t = t + (math.pi/16)){ 
-					xpos = loop_center_x - direction*loop_x_r*math.cos(t);
-					zpos = loop_center_z + loop_z_r*math.sin(t);
+				for (var t = loop_start_theta; t <= loop_start_theta + loop_theta_d; t = t + (math.pi/16)){ 
+					xpos = loop_center_x - direction*loop_r*math.cos(t);
+					zpos = loop_center_z + loop_r*math.sin(t);
 
 					post_single_array.push(new THREE.Vector3(xpos, ypos, zpos));
 				}
-
-				post_single_array.push( // finish loop
-					new THREE.Vector3(xpos, ypos, zpos));	
 				post_single_array.push( // bring coords back to edge of the previous loop stitch
 					new THREE.Vector3(xpos - direction*2*pix_per_radius, ypos, zpos + pix_per_radius));	
 				post_single_array.push(
@@ -748,8 +769,8 @@
 
 				//added radius to make space to turn
 				ypos = ypos - stitch_y_change["v_chain_with_twist"]/2 + 2*pix_per_radius;
-				// 1/2 to account for amoutn moved in reorient loop
-				zpos = zpos + 4*pix_per_radius - 1/2;
+				// 1/2 to account for amoutn moved in reorient loop? but is 17/32. Replaced with more accurate number
+				zpos = zpos + 4*pix_per_radius - 17/32;
 				reorient_array.push(
 					new THREE.Vector3(xpos, ypos, zpos));
 
@@ -782,7 +803,7 @@
 					surface_center_y = ypos - surface_y_r;
 
 					for (var t = 0; t < math.pi/2 + math.pi/16; t = t + math.pi/16){
-						xpos = surface_center_x - surface_x_r*math.cos(t);
+						xpos = surface_center_x - direction*surface_x_r*math.cos(t);
 						ypos = surface_center_y - surface_y_r*math.sin(t);
 						surface_loop.push(new THREE.Vector3(xpos, ypos, zpos));
 					}
@@ -801,6 +822,7 @@
 				single_array = single_array.concat(post_single_array);
 
 
+
 				if (last_stitch() == "turn"){}
 				else if (next_stitch() && (next_stitch().indexOf("v_chain") >= 0)){
 					xpos = xpos + direction*30*pix_per_radius;
@@ -812,15 +834,18 @@
 					single_array = single_array.concat(single_to_turn);
 				}
 				else{
-					ypos = starty; //force y change to 0
-					zpos = startz; /// z seems to already be 0. 
+					/*ypos = starty; //force y change to 0
+					zpos = startz; /// z seems to already be 0. */ 
 				}
 				
-				stitch_x_change["single"] = xpos - startx;
-				console.log('stitch_x_change["chain"]',stitch_x_change["chain"]);
+				/*stitch_x_change["single"] = xpos - startx;
+				console.log('stitch_x_change["chain"]',
+				stitch_x_change["chain"]);
 				console.log('stitch_x_change["single"]',stitch_x_change["single"]);
-				stitch_y_change["single"] = ypos - starty;
-				stitch_z_change["single"] = zpos - startz;
+				*/
+				console.log("previous: ", ypos - starty);
+				console.log("current: ", stitch_y_change["single"]);
+				/*stitch_z_change["single"] = zpos - startz;*/
 				
 
 				single_curve = new THREE.CatmullRomCurve3(single_array);
@@ -836,21 +861,26 @@
 				"slip": 2*pix_per_radius,
 				"chain": 5*pix_per_radius + hook_r, 
 				"v_chain": 0,
-				"v_chain_with_twist": pix_per_radius
+				"v_chain_with_twist": pix_per_radius,
+				"single": undefined //set at top of each divergent option 
+				// within the function (not after running it, however)
+				// same for y and z single changes
 			};
 			stitch_y_change = {
 				"tail": 0,
 				"slip": 0,
 				"chain": 0, 
 				"v_chain": 5*pix_per_radius + hook_r,
-				"v_chain_with_twist": 5*pix_per_radius + hook_r // same as v_chain, reasoning behind this one is a bit fuzzy
+				"v_chain_with_twist": 5*pix_per_radius + hook_r, // same as v_chain, reasoning behind this one is a bit fuzzy
+				"single": 0
 			};
 			stitch_z_change = {
 				"tail": 0,
 				"slip": 0,
 				"chain": 0, 
 				"v_chain": 0,
-				"v_chain_with_twist": pix_per_radius
+				"v_chain_with_twist": pix_per_radius,
+				"single": undefined
 			};
 			/////
 			stitch_x_mag = { // think of magnitiude as total width
