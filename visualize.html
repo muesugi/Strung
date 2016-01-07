@@ -15,55 +15,53 @@
 		<link rel="stylesheet" href="css/visualize.css">
 	</head>
 	<body onload="default_and_parse();">
-	
-	<div class="header">
-		<a id="site_name" href="index.html">STRUNG</a><!--127.5px-->
+		<div class="header">
+			<a id="site_name" href="index.html">STRUNG</a><!--127.5px-->
 
-		<!--site_nav floats backward, this is in reverse order:-->
-		<a class="site_nav" id="docs" href="documentation.html">Documentation</a> <!--150.797px-->
-		<a class="site_nav" id="textify" href="textify.html">Textify</a><!--68.125px-->
-		<a class="site_nav" id="visualize" href="visualize.html">Visualize</a><!--86.4844px-->
-		<a class="site_nav" id="chartify" href="chartify.html">Chartify</a> <!--79.8438px-->
-	</div>
-	<div id="orientation">Front</div>
+			<!--site_nav floats backward, this is in reverse order:-->
+			<a class="site_nav" id="docs" href="documentation.html">Documentation</a> <!--150.797px-->
+			<a class="site_nav" id="textify" href="textify.html">Textify</a><!--68.125px-->
+			<a class="site_nav" id="visualize" href="visualize.html">Visualize</a><!--86.4844px-->
+			<a class="site_nav" id="chartify" href="chartify.html">Chartify</a> <!--79.8438px-->
+		</div>
+		<div id="orientation">Front</div>
 		<div id="selects-div">
 		<div id="wpi-div">
-		<select id="wpi-select" style="width:50%;">
-			<option value="14">14 wpi (Fingering)</option>
-			<option value="12">12 wpi (Sport)</option>
-			<option value="11">11 wpi (DK)</option>
-			<option value="9">9 wpi (Worsted)</option>
-			<option value="8">8 wpi (Aran)</option>
-		 	<option value="7">7 wpi (Bulky)</option>
-			<option value="5" selected>5 wpi (Super Bulky)</option>
-			<!--<option>Other<input></input></option>-->
-		</select> 
+			<select id="wpi-select" style="width:50%;">
+				<option value="14">14 wpi (Fingering)</option>
+				<option value="12">12 wpi (Sport)</option>
+				<option value="11">11 wpi (DK)</option>
+				<option value="9">9 wpi (Worsted)</option>
+				<option value="8">8 wpi (Aran)</option>
+			 	<option value="7">7 wpi (Bulky)</option>
+				<option value="5" selected>5 wpi (Super Bulky)</option>
+				<!--<option>Other<input></input></option>-->
+			</select> 
 		</div>
 		<div id="hook-div">
-		<select id="hook-select">
-			<option value="2.25">2.25 mm (B-1)</option>
-			<option value="2.75">2.75 mm (C-2)</option>
-			<option value="3.25">3.25 mm (D-3)</option>
-			<option value="3.5">3.5 mm (E-4)</option>
-			<option value="3.75">3.75 mm (F-5)</option>
-		 	<option value="4">4 mm (G-6)</option>
-			<option value="4.5">4.5 mm (7)</option>
-			<option value="5">5 mm (H-8)</option>
-			<option value="5.5">5.5 mm (I-9)</option>
-			<option value="6">6 mm (J-10)</option>
-			<option value="6.5">6.5 mm (K-10.5)</option>
-			<option value="8">8 mm (L-11)</option>
-		 	<option value="9">9 mm (M/N-13)</option>
-			<option value="10">10 mm (N/P-15)</option>
-			<option value="11.5" selected>11.5 mm (P)</option>
-			<option value="15">15 mm (P/Q)</option>
-			<option value="16">16 mm (Q)</option>
-			<option value="19">19 mm (S)</option>
-		</select>
+			<select id="hook-select">
+				<option value="2.25">2.25 mm (B-1)</option>
+				<option value="2.75">2.75 mm (C-2)</option>
+				<option value="3.25">3.25 mm (D-3)</option>
+				<option value="3.5">3.5 mm (E-4)</option>
+				<option value="3.75">3.75 mm (F-5)</option>
+			 	<option value="4">4 mm (G-6)</option>
+				<option value="4.5">4.5 mm (7)</option>
+				<option value="5">5 mm (H-8)</option>
+				<option value="5.5">5.5 mm (I-9)</option>
+				<option value="6">6 mm (J-10)</option>
+				<option value="6.5">6.5 mm (K-10.5)</option>
+				<option value="8">8 mm (L-11)</option>
+			 	<option value="9">9 mm (M/N-13)</option>
+				<option value="10">10 mm (N/P-15)</option>
+				<option value="11.5" selected>11.5 mm (P)</option>
+				<option value="15">15 mm (P/Q)</option>
+				<option value="16">16 mm (Q)</option>
+				<option value="19">19 mm (S)</option>
+			</select>
 		</div>
 
 		<textarea id="textarea" spellcheck=false placeholder="chain(15); turn(); single(10); turn(); double(10); turn();">chain(10); turn(); single(10);</textarea>
-	</div>
 		<script type="text/javascript">
 			//Site formatting
 			$("#wpi-select").selectric();
@@ -189,6 +187,11 @@
 				// a valid index in a list with length last_i + 1
 				return (maybe_i >= 0) && (maybe_i <= last_i);
 			}
+			function set_global_coords(newx, newy, newz){
+				x = newx; 
+				y = newy;
+				z = newz;
+			}
 
 			function get_from_world(r, c, i){ 
 			//produces undefined vals instead of raising errors,
@@ -273,6 +276,10 @@
 			// differentiate custom functions from THREE.js builtins
 
 			///////////// GEOMETRIES ////////////
+			function turn(){
+				direction = -1*direction;
+				//something to do with new row y?
+			}
 			// Makes a (starting) tail yarn end 
 			// starting at (xpos, ypos, zpos)
 			function tail_geometry(xpos, ypos, zpos){
@@ -283,8 +290,8 @@
 				   new THREE.Vector3(xpos + direction*tail_length_pixels, ypos, zpos),
 				]);
 				//in case the value of tail_length pixels has changed due to wpi/hook
-				stitch_x_change["tail"] = tail_length_pixels;
-
+				//stitch_x_change["tail"] = tail_length_pixels;
+				set_global_coords(xpos + direction*tail_length_pixels, ypos, zpos);
 				tail_geom = new THREE.TubeGeometry(tail_curve, 64, pix_per_radius);
 				return tail_geom;
 			}
@@ -372,6 +379,7 @@
 				];
 				slip_array = slip_array.concat(reorient_array);
 
+				set_global_coords(startx + direction*2*pix_per_radius, starty, startz);
 				slip_curve = new THREE.CatmullRomCurve3(slip_array);
 				slip_geom = new THREE.TubeGeometry(slip_curve, 64, pix_per_radius);
 				return slip_geom;
@@ -456,6 +464,7 @@
 				chain_array = ch_array(startx, starty, startz);
 				chain_curve = new THREE.CatmullRomCurve3(chain_array);
 				chain_geom = new THREE.TubeGeometry(chain_curve, 64, pix_per_radius);
+				set_global_coords(startx + direction*(5*pix_per_radius + hook_r), starty, startz);
 				return chain_geom;
 			}
 
@@ -481,6 +490,8 @@
 
 				//move back to appropriate position
 				chain_geom.translate(startx, starty, startz);
+
+				set_global_coords(startx, starty + 5*pix_per_radius + hook_r, startz);
 				return chain_geom;
 			}
 			function v_chain_with_twist_geometry(startx, starty, startz){
@@ -550,12 +561,9 @@
 					startz);
 				//merge geoms
 				chain_geom.merge(post_chain_geom, post_chain_geom.matrix);
-				return chain_geom;
-			}
 
-			function turn(){
-				direction = -1*direction;
-				//something to do with new row y?
+				set_global_coords(startx + direction*pix_per_radius, starty + 5*pix_per_radius + hook_r, startz + pix_per_radius);
+				return chain_geom;
 			}
 
 			function single_geometry(startx, starty, startz){
@@ -569,7 +577,7 @@
 				single_array = [];
 
 				if (last_stitch() == "turn"){
-					stitch_x_mag["single"] = 
+					/*stitch_x_mag["single"] = 
 						pix_per_radius*(8 - math.cos(-7*math.pi/16) + 2*math.cos(17*math.pi/16)) 
 						+ hook_r*(1 - math.cos(-7*math.pi/16))
 						- (7/4);
@@ -579,7 +587,7 @@
 						- (7/4);
 					stitch_y_change["single"] = 
 						- pix_per_radius*((17 + 3*math.sqrt(2))/2 + math.sqrt(2) - 2*math.sin(17*math.pi/16)  + math.sin(9*math.pi/16))
-						- hook_r*((5 + 2*math.sqrt(2) + 2*math.sin(9*math.pi/16))/8);
+						- hook_r*((5 + 2*math.sqrt(2) + 2*math.sin(9*math.pi/16))/8);*/
 
 					single_array = [
 					new THREE.Vector3(xpos + direction*pix_per_radius,
@@ -592,7 +600,8 @@
 					edge_loop = []; // at one of the edges of the piece
 					//axis radii
 					edge_x_r = direction*2*pix_per_radius;
-					edge_y_r = (pix_per_radius + stitch_y_change["v_chain_with_twist"])/2;
+					edge_y_r = (pix_per_radius + 5*pix_per_radius + hook_r)/2;
+					// 5*pix_per_radius + hook_r is y change of v chain with twist
 					edge_z_r = pix_per_radius;
 
 					//(~ellipse) center coordinates
@@ -623,21 +632,20 @@
 					under_startx = xpos + direction*2*pix_per_radius;
 					under_starty = ypos - 2*pix_per_radius;
 					under_startz = zpos;
-					console.log(below_stitch());
 					under_end_x = xpos + (stitch_x_mag["single"] - stitch_x_mag[below_stitch()])/4;
+
 					under_loop = [
-						new THREE.Vector3(under_startx, //xpos + 2r
-							under_starty, under_startz),
+						new THREE.Vector3(under_startx, under_starty, under_startz),
 						new THREE.Vector3(
-							under_startx + direction*2*pix_per_radius, //xpos + 4r
+							under_startx + direction*2*pix_per_radius, 
 							under_starty, 
 							under_startz),
 						new THREE.Vector3(
-							under_startx + direction*3*pix_per_radius,//xpos + 5r 
+							under_startx + direction*3*pix_per_radius, 
 							under_starty + pix_per_radius, 
 							under_startz),
 						new THREE.Vector3(
-							under_end_x, //xpos + 7r
+							under_startx + direction*5*pix_per_radius, 
 							under_starty + pix_per_radius, 
 							under_startz - 3*pix_per_radius)];
 
@@ -650,15 +658,6 @@
 						pix_per_radius*(11-math.cos(-7*math.pi/16)+2*math.cos(17*math.pi/16)) 
 						+ hook_r*(1 - math.cos(-7*math.pi/16))
 						- (7/4);
-					stitch_x_change["single"] = 
-						pix_per_radius*(11-math.cos(-7*math.pi/16)+2*math.cos(17*math.pi/16)) 
-						+ hook_r*(1 - math.cos(-7*math.pi/16))
-						- (7/4);
-					stitch_y_change["single"] = 0;
-						/*-pix_per_radius*(-math.sqrt(2) -(7/2) + 2*math.sin(17*math.pi/16) - math.sin(9*math.pi/16))
-						- hook_r*((1/8) + (1/4)*math.sin(9*math.pi/16));*/
-					stitch_z_change["single"] = 
-						(hook_r + pix_per_radius)*math.sin(-7*math.pi/16) + 4*pix_per_radius;
 					single_array = [new THREE.Vector3(xpos, ypos, zpos)];
 					console.log("whats it adding based on below?", (stitch_x_mag["single"] - stitch_x_mag[below_stitch()])/2);
 					under_loop = [
@@ -724,7 +723,8 @@
 				//
 				//new coord update for post single
 				xpos = xpos + direction*pix_per_radius;
-				ypos = ypos + stitch_y_change["v_chain_with_twist"]/2;
+				ypos = ypos + (5*pix_per_radius + hook_r)/2;
+				//5*pix_per_radius + hook_r is y change of stitch y change of vchain twist
 				zpos = zpos - 2*pix_per_radius;
 				single_post_intersect = new THREE.Vector3(xpos, ypos, zpos);
 				single_array.push(single_post_intersect);
@@ -768,7 +768,7 @@
 				}
 
 				//added radius to make space to turn
-				ypos = ypos - stitch_y_change["v_chain_with_twist"]/2 + 2*pix_per_radius;
+				ypos = ypos - (5*pix_per_radius + hook_r)/2 + 2*pix_per_radius;
 				// 1/2 to account for amoutn moved in reorient loop? but is 17/32. Replaced with more accurate number
 				zpos = zpos + 4*pix_per_radius - 17/32;
 				reorient_array.push(
@@ -776,7 +776,7 @@
 
 				incline_loop = [];
 				incline_x_r = 2*pix_per_radius;
-				incline_y_r = (stitch_y_change["v_chain_with_twist"] - pix_per_radius)/4;
+				incline_y_r = (5*pix_per_radius + hook_r - pix_per_radius)/4;
 
 				incline_center_x = xpos + direction*incline_x_r;
 				incline_center_y = ypos - incline_y_r/2;
@@ -821,67 +821,27 @@
 				post_single_array = post_single_array.concat(reorient_array);
 				single_array = single_array.concat(post_single_array);
 
-
-
-				if (last_stitch() == "turn"){}
-				else if (next_stitch() && (next_stitch().indexOf("v_chain") >= 0)){
-					xpos = xpos + direction*30*pix_per_radius;
-					ypos = ypos + 30*pix_per_radius;
-					zpos = zpos + pix_per_radius;
-					single_to_turn = [
-					new THREE.Vector3(xpos, ypos, zpos)];
-
-					single_array = single_array.concat(single_to_turn);
-				}
-				else{
-					/*ypos = starty; //force y change to 0
-					zpos = startz; /// z seems to already be 0. */ 
-				}
-				
-				/*stitch_x_change["single"] = xpos - startx;
-				console.log('stitch_x_change["chain"]',
-				stitch_x_change["chain"]);
-				console.log('stitch_x_change["single"]',stitch_x_change["single"]);
-				*/
-				console.log("previous: ", ypos - starty);
-				console.log("current: ", stitch_y_change["single"]);
-				/*stitch_z_change["single"] = zpos - startz;*/
-				
+				set_global_coords(xpos, 0, 0);
 
 				single_curve = new THREE.CatmullRomCurve3(single_array);
 				single_geom = new THREE.TubeGeometry(single_curve, 64, pix_per_radius);
 				return single_geom;
 			}
 
+			/*
 			stitch_x_change = { // end_x - start_x, not necessarily the same as total magnitude
 				//all positive values, sign is denoted by the direction variable
 				// in pixels
 				//some will be dynamically reset on func run for geometries
 				"tail": tail_length_pixels,
 				"slip": 2*pix_per_radius,
-				"chain": 5*pix_per_radius + hook_r, 
-				"v_chain": 0,
-				"v_chain_with_twist": pix_per_radius,
-				"single": undefined //set at top of each divergent option 
-				// within the function (not after running it, however)
-				// same for y and z single changes
+				"chain": 5*pix_per_radius + hook_r,
+				"v_chain_with_twist": pix_per_radius
 			};
 			stitch_y_change = {
-				"tail": 0,
-				"slip": 0,
-				"chain": 0, 
-				"v_chain": 5*pix_per_radius + hook_r,
-				"v_chain_with_twist": 5*pix_per_radius + hook_r, // same as v_chain, reasoning behind this one is a bit fuzzy
-				"single": 0
-			};
-			stitch_z_change = {
-				"tail": 0,
-				"slip": 0,
-				"chain": 0, 
-				"v_chain": 0,
-				"v_chain_with_twist": pix_per_radius,
-				"single": undefined
-			};
+				//"v_chain": 5*pix_per_radius + hook_r,
+				//"v_chain_with_twist": 5*pix_per_radius + hook_r, // same as v_chain, reasoning behind this one is a bit fuzzy
+			};*/
 			/////
 			stitch_x_mag = { // think of magnitiude as total width
 				// from leftmost x to rightmost x
@@ -1050,11 +1010,6 @@
 					scene.add(new THREE.Line(stitch_geometry, material)); 
 					//create THREE.Line instead for unfilled model (better able to see individual lines),
 					// THREE.Mesh for a smoother model
-
-					x = x + direction * stitch_x_change[stitch]; //only x should change for most stitches,
-					// especially all that are repeated
-					y = y + stitch_y_change[stitch]; 
-					z = z + stitch_z_change[stitch]; 
 				}
 			}
 
