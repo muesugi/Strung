@@ -191,6 +191,8 @@
 				x = newx; 
 				y = newy;
 				z = newz;
+				if (cur_stitch() == "single"){
+								console.log("set",x, y, z);}
 			}
 
 			function get_from_world(r, c, i){ 
@@ -267,7 +269,6 @@
 					c = c || cur_world_c;
 					i = i || 0;
 				}
-				console.log("below of ", r, c, i);
 				//r - 1 should always be a valid index in world
 				return get_from_world(r - 1, world[r - 1].length - 2 - c);
 			}
@@ -580,14 +581,7 @@
 					/*stitch_x_mag["single"] = 
 						pix_per_radius*(8 - math.cos(-7*math.pi/16) + 2*math.cos(17*math.pi/16)) 
 						+ hook_r*(1 - math.cos(-7*math.pi/16))
-						- (7/4);
-					stitch_x_change["single"] = 
-						-pix_per_radius*(8 - math.cos(-7*math.pi/16) + 2*math.cos(17*math.pi/16)) 
-						+ hook_r*(1 - math.cos(-7*math.pi/16))
-						- (7/4);
-					stitch_y_change["single"] = 
-						- pix_per_radius*((17 + 3*math.sqrt(2))/2 + math.sqrt(2) - 2*math.sin(17*math.pi/16)  + math.sin(9*math.pi/16))
-						- hook_r*((5 + 2*math.sqrt(2) + 2*math.sin(9*math.pi/16))/8);*/
+						- (7/4);*/
 
 					single_array = [
 					new THREE.Vector3(xpos + direction*pix_per_radius,
@@ -659,7 +653,6 @@
 						+ hook_r*(1 - math.cos(-7*math.pi/16))
 						- (7/4);
 					single_array = [new THREE.Vector3(xpos, ypos, zpos)];
-					console.log("whats it adding based on below?", (stitch_x_mag["single"] - stitch_x_mag[below_stitch()])/2);
 					under_loop = [
 						new THREE.Vector3(xpos, ypos, zpos),
 						new THREE.Vector3(
@@ -672,10 +665,6 @@
 					ypos = ypos + pix_per_radius;
 					zpos = zpos - 3*pix_per_radius;	
 				}
-				//for testing purposes only
-				psx = xpos;
-				psy = ypos;
-				psz = zpos;
 
 				single_array = single_array.concat(under_loop);
 
@@ -821,27 +810,13 @@
 				post_single_array = post_single_array.concat(reorient_array);
 				single_array = single_array.concat(post_single_array);
 
-				set_global_coords(xpos, 0, 0);
+				set_global_coords(startx + direction*(xpos - startx), 0, 0);
 
 				single_curve = new THREE.CatmullRomCurve3(single_array);
 				single_geom = new THREE.TubeGeometry(single_curve, 64, pix_per_radius);
 				return single_geom;
 			}
 
-			/*
-			stitch_x_change = { // end_x - start_x, not necessarily the same as total magnitude
-				//all positive values, sign is denoted by the direction variable
-				// in pixels
-				//some will be dynamically reset on func run for geometries
-				"tail": tail_length_pixels,
-				"slip": 2*pix_per_radius,
-				"chain": 5*pix_per_radius + hook_r,
-				"v_chain_with_twist": pix_per_radius
-			};
-			stitch_y_change = {
-				//"v_chain": 5*pix_per_radius + hook_r,
-				//"v_chain_with_twist": 5*pix_per_radius + hook_r, // same as v_chain, reasoning behind this one is a bit fuzzy
-			};*/
 			/////
 			stitch_x_mag = { // think of magnitiude as total width
 				// from leftmost x to rightmost x
@@ -900,7 +875,7 @@
 				x = start_x;
 				y = start_y;
 				z = start_z;
-				direction = -1;
+				direction = 1;
 				world = [[]]; // start with one row, one column
 				world_r = 0;
 				world_c = 0; //would reset cur world index vals too, but they'll be reset
